@@ -17,7 +17,8 @@
 | 环境检查 | `doctor` / `abaqus_doctor` | 本机版本、硬件、盘、工具链路径、现有solver、`host_injection`(宿主注入DLL检测)；许可证签出不冒充已验证 |
 | 跨设备探测 | `doctor.compat` / `abaqus_host_compat` | 自动发现 PowerShell、Abaqus launcher 候选、编译器、内存与容量建议；PowerShell 缺失时硬件走 OS API 降级；只读不激活 |
 | 目标机配置生成 | `init-config` | 按当前设备生成配置骨架(绝对路径、auto容量、发现的launcher/编译器)；不覆盖已有文件；scratch仍需手工创建 |
-| 提交前配置体检 | `validate-config` / `abaqus_validate_config` | 十项PASS/WARN/FAIL检查：必需键、launcher、roots、registry/scratch可写性、容量vs硬件、磁盘下限、编译器、PowerShell、宿主注入、可选版本；只读不写文件不提交 |
+| 提交前配置体检 | `validate-config` / `abaqus_validate_config` | 十一项PASS/WARN/FAIL检查：必需键、launcher、roots、registry/scratch可写性、**scratch不在系统盘(scratch_disk_policy)**、容量vs硬件、磁盘下限、编译器、PowerShell、宿主注入、可选版本；只读不写文件不提交 |
+| 工作目录磁盘策略 | `init-config` + `plan` 双重拦截 | 自动探测系统盘，scratch 选空闲最大的非系统物理盘；work/scratch 落在系统盘直接拒绝（除非显式批准 `allow_scratch_on_system_drive`）；避免系统盘被临时文件撑爆与IO争抢导致MPI超时 |
 | 宿主/异常诊断 | `doctor.host_injection` + `status.terminal_evidence.exception_kinds` | 识别 tsbx 等注入与 `.prt`/fail-fast/中断等异常根因；区分宿主缺陷与模型缺陷；见 `abaqus://agent-host` |
 | 提交前宿主裁决 | `doctor.solve_readiness` / `plan.host_readiness` | 明确给出 `BLOCKED_BY_AGENT_INJECTION`/`READY_LICENSE_UNVERIFIED` 等verdict和是否适合真实求解；许可证仍不冒充已验证；不改动sealed哈希 |
 | 失败根因归类 | `triage` / `abaqus_triage_job` | 把 `.exception`/`.dat`/日志证据归为**一个** root_cause（HOST_SANDBOX_DEFECT、MODEL_INPUT_ERROR、NUMERICAL_CONVERGENCE、LICENSE_UNAVAILABLE、EXTERNAL_INTERRUPT等）+ 置信度 + 建议动作；支持非本skill管理的历史job；只读 |
@@ -48,7 +49,8 @@
 
 - `registry_dir`：本包自己的任务和审计记录，不指向历史queue文件。
 - `allowed_roots`：所有INP/include/user/ODB/work/scratch需要处于其内部。
-- `scratch_roots`：每job只能使用其下独立、为空的子目录。
+- `scratch_roots`：每job只能使用其下独立、为空的子目录；**必须在非系统盘的物理固定盘**，不要用C盘或网络/映射盘。`init-config` 会自动选空闲最大的数据盘，体检与plan都会拦截系统盘路径。
+- `allow_scratch_on_system_drive`：默认false。仅当用户明确书面批准接受系统盘填满风险时才设true，不用于真实生产算例。
 - `max_total_cpus`：物理核预算；`max_concurrent`和总内存预算同时限制。
 - 有未登记/无法识别的现有solver会阻止新提交，不偷偷占用旧队列资源。
 - 路径含cmd元字符会被拒绝；改用安全工作路径，不关闭校验。
