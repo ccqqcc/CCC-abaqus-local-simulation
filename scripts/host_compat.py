@@ -208,14 +208,37 @@ def data_drives():
     return rows
 
 
-def suggest_scratch_root(base_dir, folder='CJC_ABAQUS_SCRATCH'):
-    """Recommend a scratch root. Prefers the largest fixed non-system drive.
+def normalize_drive(token):
+    """Normalize 'D', 'D:', 'd:\\' or 'D:/foo' to a comparable 'd:\\' root."""
+    text = os.fspath(token).strip()
+    drive = os.path.splitdrive(text)[0]
+    if not drive and len(text) >= 1 and text[0].isalpha():
+        drive = text[0] + ':'
+    if not drive:
+        return ''
+    return os.path.normcase(drive + os.sep)
+
+
+def suggest_scratch_root(base_dir, folder='CJC_ABAQUS_SCRATCH', preferred=()):
+    """Recommend a scratch root on a fixed non-system drive.
+
+    If `preferred` gives drive letters (e.g. ['D:']), the first matching fixed
+    non-system drive wins; otherwise the largest free fixed drive is used.
+    This keeps a per-machine preference without hard-coding a drive letter into
+    the portable skill.
 
     Returns (path, on_system). on_system=True means no suitable data drive was
     found and the fallback (base/scratch) is itself on the system drive; the
-    caller must surface that as a warning/blocking condition, not silently use it.
+    caller must surface that as a warning/blocking condition.
     """
     drives = data_drives()
+    for token in preferred or ():
+        wanted = normalize_drive(token)
+        if not wanted:
+            continue
+        for row in drives:
+            if os.path.normcase(row['path']).startswith(wanted):
+                return str(Path(row['path']) / folder), False
     if drives:
         return str(Path(drives[0]['path']) / folder), False
     fallback = str(Path(base_dir).resolve() / 'scratch')
@@ -254,11 +277,17 @@ def default_limits():
         source='auto-detected; leave at least one logical processor and 15% RAM free')
 
 
-def suggest_config(base_dir):
-    """Generate a device-appropriate config skeleton. Never overwrites a file."""
+def suggest_config(base_dir, preferred_scratch_drives=()):
+    """Generate a device-appropriate config skeleton. Never overwrites a file.
+
+    `preferred_scratch_drives` is an ordered list of drive letters for THIS
+    machine (e.g. ['D:']); it is saved into the config so the preference is
+    explicit and auditable, not a hidden default of the portable skill.
+    """
     base = Path(base_dir).resolve()
     launchers = find_abaqus_launchers()
-    scratch, scratch_on_system = suggest_scratch_root(base)
+    preferred = list(preferred_scratch_drives or ())
+    scratch, scratch_on_system = suggest_scratch_root(base, preferred=preferred)
     drives = data_drives()
     limits = default_limits()
     note = ('launcher is empty when no Abaqus command was found: set it manually; '
@@ -276,6 +305,7 @@ def suggest_config(base_dir):
         allowed_roots=[str(base), str(Path(scratch).parent)],
         registry_dir=str(base / 'agent_integrations' / 'abaqus_runtime'),
         scratch_roots=[scratch],
+        preferred_scratch_drives=[normalize_drive(row).rstrip(os.sep) for row in preferred if normalize_drive(row)],
         candidate_data_drives=[row['path'] for row in drives],
         system_drive=system_drive(),
         scratch_on_system_drive=scratch_on_system,
