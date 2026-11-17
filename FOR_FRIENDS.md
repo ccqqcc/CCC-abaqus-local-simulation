@@ -27,7 +27,7 @@ cd CJC-abaqus-local-simulation
 $py = 'D:\anaconda3\python.exe'          # 换成你的 Python
 $bridge = '.\scripts\abaqus_agent.py'
 
-# 1) 按你的机器生成配置骨架（自动找 abaqus.bat / 编译器 / 算容量）
+# 1) 按你的机器生成配置骨架（自动找 abaqus.bat / 编译器 / 算容量 / 自动选非系统盘做 scratch）
 & $py $bridge init-config --output 'D:\my_project\agent_config.json'
 
 # 2) 体检：结果必须是 READY 或 USABLE_WITH_WARNINGS
@@ -37,6 +37,8 @@ $bridge = '.\scripts\abaqus_agent.py'
 ```
 
 体检出现 `BLOCKED` 时，按每一项的 `action` 修配置/换宿主，**不要改材料或网格去迁就环境**。
+
+**重要：工作目录和 scratch 不要放系统盘（一般是 C 盘）。** Abaqus 一次非线性分析能产生几十 GB 临时文件，放 C 盘会撑爆系统分区、拖慢求解甚至触发并行超时。`init-config` 会自动挑空闲最大的非系统物理盘；如果它选的盘不对，手动改 `scratch_roots` 到 D/E 等数据盘。体检和提交计划两处都会拦截系统盘路径，不要为了图省事去开 `allow_scratch_on_system_drive=true`。
 
 ## 3. 日常用法
 
