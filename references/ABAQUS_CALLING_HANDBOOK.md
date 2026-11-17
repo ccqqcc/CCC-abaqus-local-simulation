@@ -162,6 +162,14 @@ worker超时只有`terminate_at_walltime=true`时才请求Abaqus终止；否则�
 
 scratch用真实最快盘、每job独立、预留保护空间。H盘是此机器970PRO NVMe，不代表其他机器H盘一样快。磁盘保护下限8GiB是本地筛查选择，迁移需调整；ODB和用户trace可能是主要瓶颈。
 
+scratch 的磁盘选择与清理（工程实践共识，不是本机特例）：
+
+- **绝不放系统盘**：大型非线性分析临时文件可达几十上百 GB，C 盘被撑满会导致卡死/闪退/重算；系统盘并发读写与 OS 抢 IO，并行作业可能触发 MPI 通信超时。本包已在 `validate-config`/`plan` 强制拦截系统盘 work/scratch。
+- **首选非系统物理盘（DRIVE_FIXED）上的高速 SSD/NVMe**，用绝对路径；不要用网络盘/映射盘/可移动盘，临时文件需要低延迟随机 IO。三盘分工的经验是：C 盘只放系统与软件、数据盘放项目与 scratch、归档盘放完成结果。
+- **每 job 独立空子目录**，提交时用 `scratch=<job专属目录>` 显式指定，不要多个 job 共用一个 scratch；`ask_delete=OFF` 防止计算中断后临时文件被自动删除、丢失诊断信息。
+- **定期清理但只清自己的**：确认作业正常结束且无 restart 需求后，清理本包登记的过期 scratch；不要全局清空 scratch 根、不删未知 job 的目录。`scratch` 参数指向的目录只放临时文件，不要把最终 ODB 长期堆在 scratch 里。
+- 并行效率低时先查 scratch 的 IOPS/吞吐和磁盘剩余空间，再考虑改 `cpus`/`mp_mode`；频繁磁盘寻道或系统卡顿通常说明 IO 路径选错了。
+
 history高频RF/U，Explicit至少ALLKE/ALLIE，必要时ALLAE/ALLVD/ALLSD/ALLCD/ALLDMD/ETOTAL。field低频选损伤、应力、塑性及界面接触；不要输出全部field每increment。低频field与history峰不重合时报告时间偏差，必要的精确峰帧应在运行前规划，而不是后处理造出。
 
 ## 8. Restart和恢复
