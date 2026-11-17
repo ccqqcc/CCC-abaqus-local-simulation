@@ -1,4 +1,8 @@
-# Abaqus跨Agent调用包：Skill + CLI + MCP
+# CJC-abaqus-local-simulation：Abaqus跨Agent调用包（Skill + CLI + MCP）
+
+> **第一次拿到本仓库？**
+> - 你打算把说明发给 AI 代理，让 AI 自己装好并跑通 → 用 [`FOR_AI_AGENT.md`](FOR_AI_AGENT.md)（完整可执行指令，推荐）
+> - 你自己看快速上手 → 用 [`FOR_FRIENDS.md`](FOR_FRIENDS.md)（中文简版）
 
 本包将本项目实际使用的Abaqus调用方式、踩坑经验和证据规则封装为可移植入口。三个入口使用同一套后端，避免一个agent报RUNNING、另一个agent按旧缓存计算结果。无需第三方Python包；编写/调度使用Python≥3.9，ODB读取通过本机Abaqus自带Python。
 
