@@ -1,0 +1,6 @@
+interface:
+  display_name: "Abaqus Local Simulation"
+  short_description: "本机Abaqus仿真：可审计提交、状态监测、用户子程序与只读ODB提取"
+  default_prompt: "使用 $abaqus-local-simulation 检查本机Abaqus环境，为授权模型制定输入审计和求解计划，并核验ODB结果。"
+policy:
+  allow_implicit_invocation: true
