@@ -31,6 +31,7 @@
 - **不得**把原始 field 均值或单点比例当成面积/体积加权结论。
 - **不得**混用 Standard 与 Explicit 的结果；同一张 INP 在两种求解器里算法不同。
 - **不得**修改 `assets/local_config.json` 当成"配置好了"——那是作者本机路径示例，必须生成你自己的配置。
+- **不得**把作业工作目录或 scratch 放到**系统盘**（Windows 的 C 盘）：几十 GB 临时文件会撑爆系统分区，系统盘 IO 争抢会拖慢求解甚至触发 MPI 超时。本包会在 `validate-config` 和 `plan` 两处拦截；不要为了绕过它去打开 `allow_scratch_on_system_drive=true`，除非人类明确书面批准并接受风险。scratch 必须是非系统物理盘上的绝对路径，每个 job 一个独立空子目录，不用网络盘/映射盘。
 
 ### 0.3 必须停下来等人类点头的三个节点
 
@@ -130,7 +131,7 @@ $PY     = 'D:\anaconda3\python.exe'                        # §1.1 得到的绝�
 $ROOT   = 'D:\AI_ABAQUS\CJC-abaqus-local-simulation'       # §1.2 的目录
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
 $CFG    = 'D:\AI_ABAQUS\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
-$SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 你自己选的空白工作盘位置
+$SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘，auto 会帮你选空闲最大的数据盘
 ```
 
 所有路径必须是**绝对路径**，且不含 `& | < > ^ % !`、引号或换行。含这些字符会被安全校验拒绝，换路径，不要关校验。
@@ -162,7 +163,8 @@ Get-Content $CFG
 | `abaqus_launcher` | 必须指向真实存在的 `abaqus.bat` / `abaqus.exe`。若为空字符串，说明自动探测失败，手工填。 |
 | `allowed_roots` | 改成你**确实被授权读写**的项目根目录。所有 INP/include/ODB/work/scratch 都必须落在这些根之内。 |
 | `registry_dir` | 本包自己的作业记录目录，不要指向历史 queue 文件。 |
-| `scratch_roots` | 改成你打算用的 scratch 根（如 `$SCRATCH`）。该目录**必须预先存在**，否则 launcher 直接拒绝作业。 |
+| `scratch_roots` | 改成你打算用的 scratch 根（如 `$SCRATCH`）。该目录**必须预先存在**，否则 launcher 直接拒绝作业。**必须位于非系统盘的物理固定盘**；写成系统盘会被体检和 plan 双重拒绝。 |
+| `allow_scratch_on_system_drive` | 默认 `false`，保持不动。只有人类明确书面批准接受系统盘填满风险时才改 `true`，且不要用于真实算例。 |
 | `max_total_cpus` / `max_total_memory_mb` / `max_concurrent` | 整数或 `"auto"`。`plan` 返回的 `capacity.limits` 会显示实际生效值。 |
 | `min_free_disk_bytes` | 保护下限，默认 8 GiB。 |
 | `compiler_candidates` | 只有用用户子程序时才重要；不用 Fortran 可留空。 |
@@ -200,7 +202,8 @@ New-Item -ItemType Directory -Force -Path $SCRATCH | Out-Null
 | `launcher` | launcher 不存在或扩展名异常 | 用 `doctor` 的 `compat.launcher_candidates` 找真实路径，填回配置 |
 | `allowed_roots` | 目录不存在 | 创建目录，或改成真实存在的授权根 |
 | `registry` | 父目录不存在/不可写 | 创建父目录或 grant 写权限 |
-| `scratch_roots` | 目录不存在/不可写 | 建目录；注意必须**预先存在** |
+| `scratch_roots` | 目录不存在/不可写；或落在系统盘 | 建目录（必须预先存在）；系统盘则换到非系统数据盘，不要开 `allow_scratch_on_system_drive` 绕过 |
+| `scratch_disk_policy` | 不会 FAIL，INFO 汇报系统盘与候选数据盘 | 按提示确认 scratch 在数据盘上 |
 | `capacity` | auto 解析失败或非法值 | 三个容量键改成整数或 `"auto"` |
 | `free_disk` | 可用空间低于下限 | 释放空间；不要在未授权时下调 `min_free_disk_bytes` |
 | `host_injection` | 检出 `tsbx.dll` 等注入 DLL | **换宿主**：真实求解改用无注入的本机终端；当前宿主只能做审计和 ODB 后处理 |
