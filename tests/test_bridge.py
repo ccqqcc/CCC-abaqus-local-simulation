@@ -482,6 +482,36 @@ class Compat(unittest.TestCase):
         self.assertTrue(path)
         self.assertNotEqual(Path(path).parent, self.root.resolve())
 
+    def test_preferred_drive_overrides_largest_free_drive(self):
+        drives = bridge.host_compat.data_drives()
+        if len(drives) < 2:
+            self.skipTest('need at least two fixed data drives')
+        largest = drives[0]['path']
+        other = drives[1]['path']
+        self.assertNotEqual(largest, other)
+        path, on_system = bridge.host_compat.suggest_scratch_root(
+            self.root, preferred=[other])
+        self.assertFalse(on_system)
+        self.assertTrue(path.lower().startswith(other.lower()))
+
+    def test_suggest_config_records_preferred_drives(self):
+        drives = bridge.host_compat.data_drives()
+        if not drives:
+            self.skipTest('need a fixed data drive')
+        wanted = drives[0]['path'][:2]
+        config = bridge.host_compat.suggest_config(self.root, [wanted])
+        self.assertEqual(config['preferred_scratch_drives'], [wanted.lower()])
+        self.assertTrue(config['scratch_roots'][0].lower().startswith(wanted.lower()))
+
+    def test_init_config_accepts_prefer_drive(self):
+        drives = bridge.host_compat.data_drives()
+        if not drives:
+            self.skipTest('need a fixed data drive')
+        target = self.root / 'preferred_config.json'
+        result = self.backend.init_config(str(target), drives[0]['path'][:2])
+        self.assertTrue(result['suggestion']['scratch_roots'][0].lower().startswith(
+            drives[0]['path'][:2].lower()))
+
     def test_hardware_summary_is_structured(self):
         hardware = bridge.host_compat.hardware_summary()
         self.assertGreaterEqual(hardware['logical_processors'], 1)
@@ -567,6 +597,24 @@ class ConfigPreflight(unittest.TestCase):
     def test_plan_accepts_system_drive_scratch_with_explicit_override(self):
         plan = self.backend.plan(self.request)
         self.assertTrue(plan['sealed']['request']['scratch'])
+
+    def test_validate_warns_when_scratch_off_preferred_drive(self):
+        drives = bridge.host_compat.data_drives()
+        if len(drives) < 2:
+            self.skipTest('need at least two fixed data drives')
+        current = self.scratch_root.resolve().drive
+        other = next((row['path'][:2] for row in drives
+                      if row['path'][:2].lower() != current.lower()), None)
+        if not other:
+            self.skipTest('no alternative drive')
+        raw = json.loads(self.config.read_text(encoding='utf-8'))
+        raw['preferred_scratch_drives'] = [other]
+        raw.pop('allow_scratch_on_system_drive', None)
+        bridge.atomic_json(self.config, raw)
+        result = bridge.Backend(self.config).validate_config()
+        policy = next(row for row in result['checks'] if row['check'] == 'scratch_disk_policy')
+        self.assertEqual(policy['status'], 'WARN')
+        self.assertFalse(policy['detail']['scratch_on_preferred_drive'])
 
     def test_validate_flags_system_drive_without_override(self):
         raw = json.loads(self.config.read_text(encoding='utf-8'))
