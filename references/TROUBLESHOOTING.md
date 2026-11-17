@@ -27,6 +27,8 @@
 | submission.lock遗留 | 只检查registry锁内PID/创建时刻和写入是否进行 | 不自动删除；人工确认无提交进程后可恢复自身registry，不碰solver锁 |
 | 换机器后 doctor 信息不全/硬件报 error | `doctor.hardware_degraded`、`doctor.compat.powershell`、`launcher_candidates`、`release_query.parsed.version` | 硬件走 OS API 降级不冒充CIM；先 `init-config --output <新配置>` 核对，探测失败≠模型问题；见 HOST_COMPATIBILITY.md |
 | 提交前不确定配置是否可用 | `validate-config` / `abaqus_validate_config` 的 `verdict` 与各项 `action` | BLOCKED 先修配置/宿主再 `plan`；体检只读不写文件，也不替代一次授权的真实datacheck |
+| plan报work/scratch在system drive | `scratch_disk_policy` 的 `system_drive`/`data_drives`、`scratch_roots` 的 `on_system_drive` | scratch/work 换到非系统物理盘；不要开 `allow_scratch_on_system_drive` 绕过；C盘临时文件会撑爆系统分区并引发IO争抢/MPI超时 |
+| 并行慢/磁盘寻道声/计算中途崩 | scratch 剩余空间与吞吐、是否在系统盘或网络盘、每job是否独立空目录 | 先查scratch的IOPS和空间，不要先改cpus/mp_mode；只用非系统固定盘、绝对路径、每job独立；确认结束后只清自己的过期scratch |
 | Windows路径大小写/斜杠导致越界误报 | `allowed_roots` 与实际路径的 normcase 结果 | 比较已忽略大小写与斜杠方向；仍拒绝相对路径与 cmd 元字符，不放宽安全校验 |
 
 ## 有限数值恢复合同
