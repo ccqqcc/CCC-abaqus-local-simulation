@@ -101,7 +101,8 @@ class Plans(unittest.TestCase):
         self.config = self.root / 'config.json'
         bridge.atomic_json(self.config, dict(abaqus_launcher=str(self.launcher), allowed_roots=[str(self.root)],
             registry_dir=str(self.root / 'registry'), scratch_roots=[str(self.scratch_root)], max_total_cpus=8,
-            max_concurrent=4, max_total_memory_mb=8192, min_free_disk_bytes=0, probe_timeout_seconds=30))
+            max_concurrent=4, max_total_memory_mb=8192, min_free_disk_bytes=0, probe_timeout_seconds=30,
+            allow_scratch_on_system_drive=True))  # tests use a temp dir on C:; real jobs must opt in explicitly
         self.backend = bridge.Backend(self.config)
         self.request = dict(job='TEST_X', input=str(self.inp), workdir=str(self.work),
             scratch=str(self.scratch_root / 'TEST_X'), solver='standard', cpus=2, memory_mb=1024)
@@ -458,9 +459,28 @@ class Compat(unittest.TestCase):
 
     def test_suggest_config_shape(self):
         config = bridge.host_compat.suggest_config(self.root)
-        self.assertEqual(config['allowed_roots'], [str(self.root.resolve())])
+        self.assertIn(str(self.root.resolve()), config['allowed_roots'])
         self.assertIn('max_total_cpus', config)
         self.assertIn('scratch_roots', config)
+        self.assertIn('system_drive', config)
+        self.assertIn('candidate_data_drives', config)
+        self.assertFalse(config['allow_scratch_on_system_drive'])
+        # auto-selected scratch must never be on the system drive when a data drive exists
+        self.assertFalse(config['scratch_on_system_drive'] or config['scratch_roots'][0].startswith(
+            (config['system_drive'] or '\x00').lower()), 'auto scratch landed on the system drive')
+
+    def test_system_drive_detection(self):
+        system = bridge.host_compat.system_drive()
+        self.assertTrue(system)
+        self.assertTrue(bridge.host_compat.on_system_drive(system))
+        self.assertTrue(bridge.host_compat.on_system_drive(str(Path(system) / 'Users' / 'someone' / 'job')))
+        self.assertFalse(bridge.host_compat.on_system_drive('D:\\some_data_drive\\scratch'))
+
+    def test_suggest_scratch_root_prefers_data_drive(self):
+        path, on_system = bridge.host_compat.suggest_scratch_root(self.root)
+        self.assertFalse(on_system)
+        self.assertTrue(path)
+        self.assertNotEqual(Path(path).parent, self.root.resolve())
 
     def test_hardware_summary_is_structured(self):
         hardware = bridge.host_compat.hardware_summary()
@@ -534,6 +554,32 @@ class ConfigPreflight(unittest.TestCase):
         self.report()
         after = {str(path) for path in self.root.rglob('*')}
         self.assertEqual(before, after)
+
+    def test_plan_rejects_system_drive_scratch_without_override(self):
+        raw = json.loads(self.config.read_text(encoding='utf-8'))
+        raw.pop('allow_scratch_on_system_drive', None)
+        bridge.atomic_json(self.config, raw)
+        backend = bridge.Backend(self.config)
+        with self.assertRaises(bridge.AgentError) as ctx:
+            backend.plan(self.request)
+        self.assertIn('system drive', str(ctx.exception))
+
+    def test_plan_accepts_system_drive_scratch_with_explicit_override(self):
+        plan = self.backend.plan(self.request)
+        self.assertTrue(plan['sealed']['request']['scratch'])
+
+    def test_validate_flags_system_drive_without_override(self):
+        raw = json.loads(self.config.read_text(encoding='utf-8'))
+        raw.pop('allow_scratch_on_system_drive', None)
+        bridge.atomic_json(self.config, raw)
+        result = bridge.Backend(self.config).validate_config()
+        check = next(row for row in result['checks'] if row['check'] == 'scratch_roots')
+        self.assertEqual(check['status'], 'FAIL')
+        detail_text = str(check['detail'])
+        self.assertIn('SYSTEM DRIVE', detail_text)
+        self.assertTrue(all(row.get('on_system_drive') for row in check['detail']))
+        policy = next(row for row in result['checks'] if row['check'] == 'scratch_disk_policy')
+        self.assertEqual(policy['status'], 'INFO')
 
     def test_release_query_is_optional_and_warns_on_bad_launcher(self):
         result = self.report(query_release=True)
