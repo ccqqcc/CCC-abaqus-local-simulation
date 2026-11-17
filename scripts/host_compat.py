@@ -142,6 +142,86 @@ def memory_bytes():
     return None
 
 
+def system_drive():
+    """Absolute root of the Windows system drive, e.g. 'c:\\'; None off Windows.
+
+    Abaqus scratch must not live here: large scratch files can fill the system
+    partition, and concurrent scratch IO competes with the OS and can trigger
+    MPI timeouts in parallel Standard/Explicit jobs.
+    """
+    if os.name != 'nt':
+        return None
+    raw = os.environ.get('SystemDrive')
+    if raw and len(raw) >= 2:
+        return os.path.normcase(os.path.abspath(raw[:2] + os.sep))
+    try:
+        import ctypes
+        buffer = ctypes.create_unicode_buffer(260)
+        ctypes.windll.kernel32.GetSystemWindowsDirectoryW(buffer, 260)
+        if buffer.value:
+            drive = os.path.splitdrive(buffer.value)[0] or 'C:'
+            return os.path.normcase(os.path.abspath(drive + os.sep))
+    except Exception:
+        pass
+    return None
+
+
+def on_system_drive(path):
+    """True when `path` is on the Windows system drive. False off Windows or
+    when the system drive cannot be determined (never blocks by guesswork)."""
+    system = system_drive()
+    if not system:
+        return False
+    candidate = os.path.normcase(os.path.abspath(os.fspath(path)))
+    return candidate == system or candidate.startswith(system)
+
+
+def data_drives():
+    """Fixed, non-system Windows drives sorted by free space (largest first).
+
+    Only DRIVE_FIXED is accepted: network/mapped/removable drives are excluded
+    because scratch needs low-latency random IO. Returns [] off Windows.
+    """
+    if os.name != 'nt':
+        return []
+    import ctypes
+    rows = []
+    system = system_drive() or ''
+    for letter in 'CDEFGHIJKLMNOPQRSTUVWXYZ':
+        root = letter + ':' + os.sep
+        if not os.path.isdir(root):
+            continue
+        try:
+            drive_type = ctypes.windll.kernel32.GetDriveTypeW(ctypes.c_wchar_p(root))
+        except Exception:
+            continue
+        if drive_type != 3:  # DRIVE_FIXED
+            continue
+        if os.path.normcase(root) == system:
+            continue
+        try:
+            usage = shutil.disk_usage(root)
+        except OSError:
+            continue
+        rows.append(dict(path=root, free_bytes=usage.free, total_bytes=usage.total))
+    rows.sort(key=lambda row: (-row['free_bytes'], row['path']))
+    return rows
+
+
+def suggest_scratch_root(base_dir, folder='CJC_ABAQUS_SCRATCH'):
+    """Recommend a scratch root. Prefers the largest fixed non-system drive.
+
+    Returns (path, on_system). on_system=True means no suitable data drive was
+    found and the fallback (base/scratch) is itself on the system drive; the
+    caller must surface that as a warning/blocking condition, not silently use it.
+    """
+    drives = data_drives()
+    if drives:
+        return str(Path(drives[0]['path']) / folder), False
+    fallback = str(Path(base_dir).resolve() / 'scratch')
+    return fallback, on_system_drive(fallback)
+
+
 def hardware_summary():
     """Always-structured hardware fallback, independent of PowerShell."""
     logical = os.cpu_count() or 1
@@ -178,20 +258,33 @@ def suggest_config(base_dir):
     """Generate a device-appropriate config skeleton. Never overwrites a file."""
     base = Path(base_dir).resolve()
     launchers = find_abaqus_launchers()
-    scratch = base / 'scratch'
+    scratch, scratch_on_system = suggest_scratch_root(base)
+    drives = data_drives()
     limits = default_limits()
+    note = ('launcher is empty when no Abaqus command was found: set it manually; '
+            'scratch directory must be created before planning a job; '
+            'review allowed_roots before use.')
+    if scratch_on_system:
+        note += (' WARNING: no fixed non-system drive was found, so scratch falls back to the SYSTEM DRIVE. '
+                 'This is unsafe for real solves (system partition fill-up + scratch/OS IO contention); '
+                 'add a data drive or set scratch_roots to a non-system path before submitting.')
+    else:
+        note += (' scratch auto-selected on a fixed non-system drive: keep it there; '
+                 'never move job work/scratch onto the system drive.')
     return dict(
         abaqus_launcher=launchers[0]['path'] if launchers else '',
-        allowed_roots=[str(base)],
+        allowed_roots=[str(base), str(Path(scratch).parent)],
         registry_dir=str(base / 'agent_integrations' / 'abaqus_runtime'),
-        scratch_roots=[str(scratch)],
+        scratch_roots=[scratch],
+        candidate_data_drives=[row['path'] for row in drives],
+        system_drive=system_drive(),
+        scratch_on_system_drive=scratch_on_system,
+        allow_scratch_on_system_drive=False,
         min_free_disk_bytes=8 * 1024 ** 3,
         probe_timeout_seconds=90,
         compiler_candidates=[row['path'] for row in find_compilers()],
         **limits,
-        note=(' launcher is empty when no Abaqus command was found: set it manually; '
-              'scratch directory must be created before planning a job; '
-              'review allowed_roots before use.').strip())
+        note=note.strip())
 
 
 def same_path(a, b):
