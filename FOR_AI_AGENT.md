@@ -131,7 +131,7 @@ $PY     = 'D:\anaconda3\python.exe'                        # §1.1 得到的绝�
 $ROOT   = 'D:\AI_ABAQUS\CJC-abaqus-local-simulation'       # §1.2 的目录
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
 $CFG    = 'D:\AI_ABAQUS\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
-$SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘，auto 会帮你选空闲最大的数据盘
+$SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘；若本机有固定偏好可在 init-config 加 --prefer-drive D:
 ```
 
 所有路径必须是**绝对路径**，且不含 `& | < > ^ % !`、引号或换行。含这些字符会被安全校验拒绝，换路径，不要关校验。
@@ -140,6 +140,8 @@ $SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 必须选非系统�
 
 ```powershell
 & $PY $BRIDGE init-config --output $CFG
+# 若本机对盘符有明确偏好（例如工作固定放 D 盘），显式指定，不要把作者本机的偏好当成通用默认：
+# & $PY $BRIDGE init-config --output $CFG --prefer-drive 'D:'
 ```
 
 这个命令会：
@@ -164,6 +166,7 @@ Get-Content $CFG
 | `allowed_roots` | 改成你**确实被授权读写**的项目根目录。所有 INP/include/ODB/work/scratch 都必须落在这些根之内。 |
 | `registry_dir` | 本包自己的作业记录目录，不要指向历史 queue 文件。 |
 | `scratch_roots` | 改成你打算用的 scratch 根（如 `$SCRATCH`）。该目录**必须预先存在**，否则 launcher 直接拒绝作业。**必须位于非系统盘的物理固定盘**；写成系统盘会被体检和 plan 双重拒绝。 |
+| `preferred_scratch_drives` | 可选，如 `["D:"]`，表达**本机**的 scratch 盘符偏好；`init-config --prefer-drive` 会自动写入。体检会审计 scratch 是否真的落在该盘。作者本机用 D 盘是因为 C 盘只剩约 32 GB，这不是通用默认值。 |
 | `allow_scratch_on_system_drive` | 默认 `false`，保持不动。只有人类明确书面批准接受系统盘填满风险时才改 `true`，且不要用于真实算例。 |
 | `max_total_cpus` / `max_total_memory_mb` / `max_concurrent` | 整数或 `"auto"`。`plan` 返回的 `capacity.limits` 会显示实际生效值。 |
 | `min_free_disk_bytes` | 保护下限，默认 8 GiB。 |
