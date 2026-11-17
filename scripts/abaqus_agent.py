@@ -512,25 +512,43 @@ class Backend:
         else:
             add('registry', 'PASS', 'parent exists; static os.access says writable')
 
+        override_system = self.config.get('allow_scratch_on_system_drive', False) is True
         scratch_rows = []
         for raw in self.config.get('scratch_roots', []):
             path = Path(raw).resolve()
+            on_system = host_compat.on_system_drive(path)
             if not path.is_dir():
                 status, detail = 'FAIL', 'directory missing; the launcher refuses a non-existent scratch'
             elif not os.access(path, os.W_OK):
                 status, detail = 'FAIL', 'not writable (static check)'
+            elif on_system and not override_system:
+                status = 'FAIL'
+                detail = ('ON THE SYSTEM DRIVE: large scratch can fill the OS partition and scratch/OS IO '
+                          'contention can trigger solver slowdowns or MPI timeouts. Use a fixed non-system drive')
             elif not any(host_compat.path_is_within(path, root) for root in self.roots):
                 status, detail = 'WARN', 'outside allowed_roots; plan will reject it'
             else:
                 status, detail = 'PASS', 'exists, writable, inside allowed_roots'
-            scratch_rows.append(dict(path=str(path), status=status, detail=detail))
+            scratch_rows.append(dict(path=str(path), status=status, detail=detail,
+                                     on_system_drive=on_system))
         if not scratch_rows:
             add('scratch_roots', 'FAIL', 'no scratch_roots configured', 'Add at least one scratch root')
         else:
             worst = 'FAIL' if any(r['status'] == 'FAIL' for r in scratch_rows) else (
                 'WARN' if any(r['status'] == 'WARN' for r in scratch_rows) else 'PASS')
             add('scratch_roots', worst, scratch_rows,
-                'Create scratch before plan; each job needs its own empty child directory')
+                'Create scratch before plan; use a fixed non-system drive; each job needs its own empty child directory')
+
+        system_drive = host_compat.system_drive()
+        if system_drive:
+            add('scratch_disk_policy',
+                'PASS' if override_system else 'INFO',
+                dict(system_drive=system_drive,
+                     data_drives=[row['path'] for row in host_compat.data_drives()],
+                     allow_scratch_on_system_drive=override_system),
+                ('Explicit override is active: system-drive scratch was accepted by config; do not use for real solves'
+                 if override_system else
+                 'Scratch stays off the system drive by policy; add allow_scratch_on_system_drive=true only with explicit user approval'))
 
         limits = None
         try:
@@ -734,6 +752,12 @@ class Backend:
         scratch_roots = [Path(p).resolve() for p in self.config['scratch_roots']]
         if not any(root in scratch.parents for root in scratch_roots):
             raise AgentError('scratch must be a unique child of a configured scratch root')
+        if host_compat.on_system_drive(work) and self.config.get('allow_scratch_on_system_drive', False) is not True:
+            raise AgentError('workdir is on the system drive; use a non-system data drive for job files')
+        if host_compat.on_system_drive(scratch) and self.config.get('allow_scratch_on_system_drive', False) is not True:
+            raise AgentError('scratch is on the system drive; large scratch fills the OS partition and IO contention '
+                             'can cause solver slowdown/MPI timeout. Use a fixed non-system drive, '
+                             'or set allow_scratch_on_system_drive=true only with explicit user approval')
         solver = raw.get('solver', 'standard').lower()
         if solver not in ('standard', 'explicit'):
             raise AgentError('solver must be standard or explicit')
