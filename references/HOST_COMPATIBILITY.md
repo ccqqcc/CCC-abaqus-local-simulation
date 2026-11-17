@@ -35,6 +35,27 @@ $bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
 
 生成后依次：`doctor` → `validate-config --query-release` → 建 scratch → `plan`。任何一步不匹配都先修配置，不要改物理模型去适配环境。
 
+## 2a. 工作目录与 scratch 绝不能放系统盘（强制策略）
+
+这是从大量工程实践里反复验证的硬规则，本包把它做成**代码级拦截**，不只是文档提醒：
+
+- **为什么会出事**：非线性分析会生成几十 GB 乃至上百 GB 的临时文件。scratch 默认落在 C 盘会撑爆系统分区，导致卡死、闪退、算例中断重来；系统盘的并发读写还会和操作系统抢 IO，拖慢求解，甚至在并行作业时触发 MPI 通信超时。社区经验里"大型模型计算崩溃的 80% 原因不是内存不足，而是 scratch 的 IO 吞吐触顶"是常见共识。
+- **正确做法**：scratch 指向**非系统盘的物理固定盘（DRIVE_FIXED）**，优先高速 SSD/NVMe，用绝对路径；每个 job 一个独立空子目录；不要用网络盘/映射盘/可移动盘（低延迟随机 IO 会被网络延迟破坏）。
+- **三盘分工的经验**：C 盘只放系统和软件；D/数据盘放项目、scratch、运算输出；归档盘放完成的结果做冷数据。本包不强制具体盘符，只要求"非系统盘 + 固定盘"。
+
+本包的实现：
+
+| 位置 | 行为 |
+|---|---|
+| `init-config` | 自动探测系统盘（`system_drive()`），列出固定数据盘（`data_drives()`），把 `scratch_roots` 选到**空闲最大的非系统盘** `CJC_ABAQUS_SCRATCH`；无可用数据盘时在 `note` 里给出明确警告 |
+| `validate-config` | 新增 `scratch_disk_policy` 检查；scratch 落在系统盘时 `scratch_roots` 判 **FAIL**（除非显式覆盖），并列出系统盘与候选数据盘 |
+| `plan` | 提交前硬拦截：work 或 scratch 在系统盘直接拒绝，附修复指引 |
+| 显式覆盖 | 只有配置里 `allow_scratch_on_system_drive=true`（需用户明确批准）才放行，此时体检标 WARN/INFO 留痕 |
+
+注意：`allow_scratch_on_system_drive` 是为测试夹具和特殊环境留的**逃生口**，不是常规选项。开启等于接受系统盘被填满和 IO 争抢的风险，不要用于真实生产算例。
+
+相关诊断函数：`host_compat.system_drive()`、`on_system_drive(path)`、`data_drives()`、`suggest_scratch_root(base)`，均可从 `abaqus_host_compat` MCP 工具的 `compat` 信息中观察结果。
+
 ## 2b. 提交前配置体检：`validate-config`
 
 ```powershell
@@ -102,3 +123,14 @@ MCP 等价工具：`abaqus_validate_config`（可选 `query_release` 布尔参�
 - `init-config` 只在目标路径不存在时写文件；已存在则报错，不覆盖。
 - 探测到候选不等于许可证可用、版本关键字兼容或子程序 ABI 匹配；这些仍需目标机单独验证。
 - 本文件不改变物理/材料/验收合同，也不放宽任何授权与哈希冻结规则。
+
+## 7. 参考经验（外部资料，仅取技术共识）
+
+以下资料用于支撑 §2a 的 scratch 磁盘策略。本包只采纳与 IO/磁盘布局有关的技术共识，不采纳其产品推广内容：
+
+- Abaqus 环境文件与 scratch 配置解析（IO 隔离与 MPI 超时、scratch IOPS 是并行瓶颈）：https://tsight.io/articles/11909097?lang=zh
+- 临时文件路径定位与 C 盘空间清理（换成非系统盘、计算前预估空间、区分手动/自动清理）：https://www.gofarlic.com/techDocumentDetail?documentId=53715
+- "no enough disk" 诊断（相对路径不可靠、避免网络存储做 scratch、作业级覆盖 + 环境级固化）：https://ask.csdn.net/questions/9249221
+- Abaqus 改临时路径三步与系统盘风险（新建数据盘目录、`scratch='D:/...'`、统一管理）：https://www.saifanbox.com/news/356.html
+
+这些是社区/厂商经验，不是 Abaqus 官方 SLA；本包把其中可机械验证的部分（系统盘判定、固定盘筛选、绝对路径、每 job 独立目录）变成了拦截规则。
