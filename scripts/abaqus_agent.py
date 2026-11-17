@@ -541,14 +541,25 @@ class Backend:
 
         system_drive = host_compat.system_drive()
         if system_drive:
-            add('scratch_disk_policy',
-                'PASS' if override_system else 'INFO',
+            preferred = [host_compat.normalize_drive(row).rstrip(os.sep)
+                         for row in self.config.get('preferred_scratch_drives', [])]
+            on_preferred = any(host_compat.normalize_drive(row['path']) ==
+                               host_compat.normalize_drive(item)
+                               for row in scratch_rows for item in preferred)
+            disk_policy_status = 'PASS' if override_system else 'INFO'
+            if preferred and not on_preferred and not override_system:
+                disk_policy_status = 'WARN'
+            add('scratch_disk_policy', disk_policy_status,
                 dict(system_drive=system_drive,
+                     preferred_scratch_drives=preferred,
+                     scratch_on_preferred_drive=on_preferred,
                      data_drives=[row['path'] for row in host_compat.data_drives()],
                      allow_scratch_on_system_drive=override_system),
                 ('Explicit override is active: system-drive scratch was accepted by config; do not use for real solves'
                  if override_system else
-                 'Scratch stays off the system drive by policy; add allow_scratch_on_system_drive=true only with explicit user approval'))
+                 ('Configured preferred scratch drive(s) %s not used; move scratch there or update the preference'
+                  % ','.join(preferred) if preferred and not on_preferred else
+                  'Scratch stays off the system drive by policy; add allow_scratch_on_system_drive=true only with explicit user approval')))
 
         limits = None
         try:
@@ -650,7 +661,7 @@ class Backend:
             note=('Static preflight only: os.access is not a write test, nothing is created and no solver is submitted. '
                   'With query_release, abaqus information=release runs in an auto-cleaned temporary directory.'))
 
-    def init_config(self, output):
+    def init_config(self, output, prefer_drive=None):
         """Generate a device-appropriate config skeleton; never overwrite."""
         raw = Path(output)
         if not raw.is_absolute():
@@ -658,7 +669,10 @@ class Backend:
         path = raw.resolve()
         if path.exists():
             raise AgentError('Refusing to overwrite existing config: ' + str(path))
-        value = host_compat.suggest_config(path.parent)
+        preferred = []
+        if prefer_drive:
+            preferred = [item.strip() for item in str(prefer_drive).split(',') if item.strip()]
+        value = host_compat.suggest_config(path.parent, preferred_scratch_drives=preferred)
         atomic_json(path, value)
         return dict(config=str(path), created=True, suggestion=value,
             note='Review abaqus_launcher/allowed_roots/scratch_roots; create the scratch directory before plan')
@@ -972,6 +986,8 @@ def main():
     sub = parser.add_subparsers(dest='action', required=True)
     d = sub.add_parser('doctor'); d.add_argument('--query-release', action='store_true')
     i = sub.add_parser('init-config'); i.add_argument('--output', required=True)
+    i.add_argument('--prefer-drive', default=None,
+                   help='Comma-separated preferred scratch drives for THIS machine, e.g. D: or D:,E:')
     v = sub.add_parser('validate-config'); v.add_argument('--query-release', action='store_true')
     p = sub.add_parser('plan'); p.add_argument('--request', required=True)
     s = sub.add_parser('submit'); s.add_argument('--request', required=True); s.add_argument('--plan-token', required=True)
@@ -985,7 +1001,7 @@ def main():
     try:
         backend = Backend(args.config)
         if args.action == 'doctor': result = backend.doctor(args.query_release)
-        elif args.action == 'init-config': result = backend.init_config(args.output)
+        elif args.action == 'init-config': result = backend.init_config(args.output, args.prefer_drive)
         elif args.action == 'validate-config': result = backend.validate_config(args.query_release)
         elif args.action == 'plan': result = backend.plan(read_json(args.request))
         elif args.action == 'submit': result = backend.submit(read_json(args.request), args.plan_token, args.authorize, args.authorization_note)
