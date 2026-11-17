@@ -50,6 +50,7 @@
 - `registry_dir`：本包自己的任务和审计记录，不指向历史queue文件。
 - `allowed_roots`：所有INP/include/user/ODB/work/scratch需要处于其内部。
 - `scratch_roots`：每job只能使用其下独立、为空的子目录；**必须在非系统盘的物理固定盘**，不要用C盘或网络/映射盘。`init-config` 会自动选空闲最大的数据盘，体检与plan都会拦截系统盘路径。
+- `preferred_scratch_drives`：可选的本机盘符偏好，如 `["D:"]`。由 `init-config --prefer-drive D:` 写入；体检会审计 scratch 是否落在该盘。作者本机 D 盘偏好不是通用默认，其他机器按实际情况指定。
 - `allow_scratch_on_system_drive`：默认false。仅当用户明确书面批准接受系统盘填满风险时才设true，不用于真实生产算例。
 - `max_total_cpus`：物理核预算；`max_concurrent`和总内存预算同时限制。
 - 有未登记/无法识别的现有solver会阻止新提交，不偷偷占用旧队列资源。
