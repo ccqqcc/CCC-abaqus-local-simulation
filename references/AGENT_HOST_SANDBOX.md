@@ -1,3 +1,5 @@
+> 中文版。[English](references/AGENT_HOST_SANDBOX_EN.md)
+
 # Agent 宿主环境对 Abaqus 子进程的影响（实测诊断与边界）
 
 适用范围：agent 有本机命令执行权限，但运行在带**进程注入**或**进程级文件系统隔离**的宿主中（例如 WorkBuddy/Cursor 一类带沙箱的桌面 agent）。本文件只讲"调用能否成立"，不改变任何物理/材料/验收合同。普通本机直跑、无注入宿主可忽略本文件。
@@ -58,9 +60,9 @@ Abaqus 在 solver rank 异常退出时写 `<job>.<seq>.exception`。有些失败
 
 真实样本：`JOB_ALPHA` → `HOST_SANDBOX_DEFECT` / HIGH；`JOB_BETA` → `EXTERNAL_INTERRUPT` / HIGH。
 
-## 3. 注入/隔离宿主下的调用要点（本机实测）
+## 3. 注入/隔离宿主下的调用要点（实测现象）
 
-以下不是普遍真理，是本机 Abaqus 2023 + 带注入沙箱宿主上的实测现象，遇到同类症状时按此排查：
+以下是 Abaqus + 带注入沙箱宿主上观察到的实测现象，遇到同类症状时按此排查；具体表现随版本与宿主而异：
 
 1. **绝对路径 `input=` 在 `cmd /d /s /c` 包装下可能失败**：solver 报 `could not be located: <绝对路径>.inp`，即使该文件在 agent 视图中存在。可先 `cd`/`cwd` 到 job 目录，用**相对文件名** `input=<job>.inp` 再试。这是调用路径问题，不要改 INP 内容。
 2. **`.prt` 交接失败是进程级 FS 隔离的表现**：`pre.exe` 写部件映射文件，另一个子进程（`standard.exe`）在隔离视图里读不到，表现为 `PART_MAP_HANDOFF`。与 `scratch` 位置、`cpus`、模型无关；已知成功的输入在同宿主同法重报同一错误即可证伪"模型问题"。
