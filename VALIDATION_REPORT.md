@@ -1,3 +1,5 @@
+> 中文版。[English](VALIDATION_REPORT_EN.md)
+
 # Abaqus跨Agent调用包验收范围说明
 
 本包随附可重复的验收脚本，绝不提交新的有限元分析。以下内容描述验收范围，不含任何具体研究项目、模型、ODB 或数值结果。
@@ -16,7 +18,7 @@
 
 ```powershell
 $py = '<PYTHON_EXE>'
-& $py scripts\validation\run_validation.py --config <你的配置路径>
+& $py validation\run_validation.py --config <你的配置路径>
 ```
 
 不传入 `--real-odb` 时只跑单元测试与只读版本查询，不需要任何模型文件。传入真实 ODB 时需你自己指定 step、history-region、axis 与 solver，本机路径/节点号不是通用模板。
