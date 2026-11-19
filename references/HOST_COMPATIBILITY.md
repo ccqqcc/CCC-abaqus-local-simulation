@@ -19,7 +19,7 @@
 ## 2. 一键生成目标机配置
 
 ```powershell
-$py = 'D:\anaconda3\python.exe'
+$py = '<PYTHON_EXE>'
 $bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
 & $py $bridge init-config --output 'D:\new_project\agent_config.json'
 ```
@@ -55,7 +55,7 @@ $bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
 
 ### 本机偏好示例（作者机器）
 
-作者本机把 **D 盘**定为工作任务首选盘，配置里显式写 `preferred_scratch_drives: ["D:"]`，scratch 落在 `D:/CJC_ABAQUS_SCRATCH`。原因是本机 C 盘仅剩约 32 GB，而 D 盘有 1.3 TB 以上空闲；旧的 H 盘 scratch 只有 80 GB。这个偏好**只写在本机配置里**，不会作为通用默认值强加给其他机器——别人的机器按 `init-config --prefer-drive` 显式指定，或默认按空闲最大的物理盘自动选。给朋友的配置示例不含这条本机偏好。
+作者本机把 **D 盘**定为工作任务首选盘，配置里显式写 `preferred_scratch_drives: ["D:"]`，scratch 落在 `<SCRATCH_ROOT>`。原因是本机 C 盘仅剩约 32 GB，而 D 盘有 1.3 TB 以上空闲；旧的 H 盘 scratch 只有 80 GB。这个偏好**只写在本机配置里**，不会作为通用默认值强加给其他机器——别人的机器按 `init-config --prefer-drive` 显式指定，或默认按空闲最大的物理盘自动选。给朋友的配置示例不含这条本机偏好。
 
 注意：`allow_scratch_on_system_drive` 是为测试夹具和特殊环境留的**逃生口**，不是常规选项。开启等于接受系统盘被填满和 IO 争抢的风险，不要用于真实生产算例。
 
