@@ -3,6 +3,8 @@ name: abaqus-local-simulation
 description: Run and audit local Windows Abaqus/Standard or Explicit workflows from agents, including INP dependency plans, authorized jobs, user subroutines, process-aware monitoring, restart evidence and read-only ODB extraction. Use for Abaqus simulation or its numerical/operational diagnosis, not generic CAD or unsupported material calibration.
 ---
 
+> 中文版。[English](SKILL_EN.md)
+
 # Abaqus local simulation
 
 This folder is both a portable skill and a stdlib-only CLI/MCP adapter. It does not need a Codex API, a cloud service, or WorkBuddy-specific Python modules. The validated host uses Abaqus 2023 on Windows; other installations require path, version and compiler validation.
