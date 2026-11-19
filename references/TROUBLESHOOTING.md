@@ -1,3 +1,5 @@
+> 中文版。[English](references/TROUBLESHOOTING_EN.md)
+
 # 故障判断与有限恢复
 
 | 症状 | 必查证据 | 禁止捷径/可复用规则 |
@@ -12,7 +14,7 @@
 | candidate后0点 | accepted RF/U原始history | NO_CONFIRMED_PEAK，不按可行窗口/目标直接分类 |
 | trace/ierr0但accepted异常 | NaN/inf、unpaired、properties、平衡/energy | ierr0不代表本构返回可靠；trace试探不能计accepted |
 | 打开ODB Python2 TypeError | path是否unicode、filesystem编码、版本 | 修读取接口，不给模型判INVALID物理；异常必须非零 |
-| String Expected as dictionary Key | JSON中的step/history/energy region是否unicode | 本机2023 repository key也要转native string，不仅仅转换ODB路径；真实ODB验证该适配 |
+| String Expected as dictionary Key | JSON中的step/history/energy region是否unicode | 部分版本的 repository key 也需转 native string，不仅仅是 ODB 路径 |
 | 找不到CPRESS/SDEG | 全部field keys、contact后缀、cohesive元素vscontactvsUINTER | 不造变量、不凭裸key缺失说压力不存在 |
 | fine mesh改变比例 | facet geometry/platform/topology是否同步变化 | geometry reconstruction和pure h-refinement分开 |
 | tied模型过强/PEEQ近0 | MONO/TIE/internal DOF/Poisson、理论约束上限 | 接近target也可能端面锁死，不调材料补偿 |
