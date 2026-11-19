@@ -8,7 +8,7 @@
 
 完整调用手册：[ABAQUS_CALLING_HANDBOOK.md](references/ABAQUS_CALLING_HANDBOOK.md)。子程序和故障专题见`references/`。本项目历史全面复盘不随包复制整个研究工作区，可在本机参考：
 
-`D:/ai_abaqus/3DPC_IBM_C50_RESTART_20260921/08_PROJECT_RETROSPECTIVE_20261004/PROJECT_ROUTES_PROBLEMS_LESSONS_AND_ABAQUS_CALLS.md`
+`<PROJECT_ROOT>/<PRIVATE_PROJECT>/08_PROJECT_RETROSPECTIVE_20261004/PROJECT_ROUTES_PROBLEMS_LESSONS_AND_ABAQUS_CALLS.md`
 
 ## 1. 包含哪些实际能力
 
@@ -39,9 +39,9 @@
 
 ## 2. 当前机器与迁移
 
-已核验本机：Windows，Abaqus2023，`D:/SIMULIA/Commands/abaqus.bat`；Python3为`D:/anaconda3/python.exe`；32物理核/64逻辑线程，约63.89GiB内存；H盘NVMe。ifx/MSVC候选路径存在，不等于本轮重新编译验证了所有UMAT/UINTER。
+已核验本机：Windows，Abaqus2023，`<ABAQUS_LAUNCHER>`；Python3为`<PYTHON_EXE>`；按当前机器实测。ifx/MSVC候选路径存在，不等于本轮重新编译验证了所有UMAT/UINTER。
 
-本机Skill安装位置：`C:/Users/21050/.codex/skills/abaqus-local-simulation`。
+本机Skill安装位置：`<SKILL_DIR>`。
 
 迁移：解压整个skill目录到目标agent可访问位置；在新机器先用 `init-config --output <新配置路径>` 生成建议配置（自动探测 launcher/编译器/硬件并按 `auto` 给出容量），再核对 `doctor.compat`、`doctor --query-release` 与 `solve_readiness`，用 `validate-config --query-release` 做提交前体检（BLOCKED 时先修配置/宿主，不要改模型），最后按授权修改launcher、项目根、registry、scratch及容量。配置中的工作区范围必须显式授权；路径比较已支持Windows大小写/斜杠差异。Abaqus和合法许可证须在目标机器独立安装；包不附带求解器、许可证、专有模型/ODB或私有编译器。详见 `references/HOST_COMPATIBILITY.md`。
 
@@ -61,8 +61,8 @@
 下面路径是本机实例；在其他机器替换为解压位置。示例INP/region名称只是合同模板，不代表存在可立即提交的模型。
 
 ```powershell
-$abaqusPython = 'D:\anaconda3\python.exe'
-$abaqusBridge = 'C:\Users\21050\.codex\skills\abaqus-local-simulation\scripts\abaqus_agent.py'
+$abaqusPython = '<PYTHON_EXE>'
+$abaqusBridge = '<SKILL_DIR>\scripts\abaqus_agent.py'
 & $abaqusPython $abaqusBridge init-config --output 'D:\new_project\agent_config.json'  # 仅新机器，生成后核对
 & $abaqusPython $abaqusBridge validate-config --query-release  # 提交前体检；BLOCKED 先修配置/宿主
 & $abaqusPython $abaqusBridge doctor --query-release
@@ -84,7 +84,7 @@ token不是许可证/密码；它绑定计划内容。输入、include、用户�
 读取ODB先做inventory，使用其真实step/region，不选“最大位移看起来像RP”：
 
 ```json
-{"mode":"inventory","odb":"H:/STAGE7_20261003/S7_E1_X/S7_E1_X.odb"}
+{"mode":"inventory","odb":"<EXAMPLE_ODB>"}
 ```
 
 保存为新请求文件，再运行`probe --request 文件路径`。根据inventory填`assets/odb_peak_request.example.json`。新证据写入registry；原ODB只读。
@@ -99,18 +99,17 @@ token不是许可证/密码；它绑定计划内容。输入、include、用户�
 {
   "mcpServers": {
     "abaqus-local-simulation": {
-      "command": "D:/anaconda3/python.exe",
+      "command": "<PYTHON_EXE>",
       "args": [
-        "C:/Users/21050/.codex/skills/abaqus-local-simulation/scripts/mcp_server.py",
+        "<SKILL_DIR>/scripts/mcp_server.py",
         "--config",
-        "C:/Users/21050/.codex/skills/abaqus-local-simulation/assets/local_config.json"
+        "<SKILL_DIR>/assets/local_config.json"
       ]
     }
   }
 }
 ```
 
-连接顺序：initialize → notifications/initialized → tools/list → abaqus_doctor。随后plan/request/token/人工批准/submit/status/probe；失败时用 abaqus_triage_job 归类，换机器时用 abaqus_host_compat 只读探测、abaqus_validate_config 做提交前体检。另提供六个只读MCP文档资源：`abaqus://handbook`、`abaqus://user-subroutines`、`abaqus://troubleshooting`、`abaqus://agent-host`、`abaqus://host-compat`、`abaqus://project-contract`，没有本机文件读取工具的agent也可通过resources/read获取指导。服务无HTTP端口，不会上传模型；stdout只输出UTF-8逐行JSON-RPC，solver输出写文件，不污染协议。客户端退出不自动终止独立job worker。
 
 若目标agent没有MCP，但能调用命令行：直接使用CLI JSON接口并读取SKILL/手册。若可导入Skills：导入完整目录，指示其使用`$abaqus-local-simulation`或读取SKILL.md。三种入口不依赖彼此。
 
