@@ -56,7 +56,7 @@ Abaqus 在 solver rank 异常退出时写 `<job>.<seq>.exception`。有些失败
 
 优先级：显式 solver 异常 > `.dat` 输入错误 > license/数值标记 > 注入嫌疑 > undetermined。每种结果都带 `basis`、`evidence_summary`、`recommended_action`。这是启发式归类，不证明模型正确。
 
-真实样本：`SPLIT_G9` → `HOST_SANDBOX_DEFECT` / HIGH；`CT_ANALYTIC` → `EXTERNAL_INTERRUPT` / HIGH。
+真实样本：`JOB_ALPHA` → `HOST_SANDBOX_DEFECT` / HIGH；`JOB_BETA` → `EXTERNAL_INTERRUPT` / HIGH。
 
 ## 3. 注入/隔离宿主下的调用要点（本机实测）
 
