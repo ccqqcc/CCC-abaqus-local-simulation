@@ -1,14 +1,14 @@
-# CJC-abaqus-local-simulation：Abaqus跨Agent调用包（Skill + CLI + MCP）
+> 中文版。[English](README_EN.md)
+
+# abaqus-local-simulation：Abaqus跨Agent调用包（Skill + CLI + MCP）
 
 > **第一次拿到本仓库？**
 > - 你打算把说明发给 AI 代理，让 AI 自己装好并跑通 → 用 [`FOR_AI_AGENT.md`](FOR_AI_AGENT.md)（完整可执行指令，推荐）
 > - 你自己看快速上手 → 用 [`FOR_FRIENDS.md`](FOR_FRIENDS.md)（中文简版）
 
-本包将本项目实际使用的Abaqus调用方式、踩坑经验和证据规则封装为可移植入口。三个入口使用同一套后端，避免一个agent报RUNNING、另一个agent按旧缓存计算结果。无需第三方Python包；编写/调度使用Python≥3.9，ODB读取通过本机Abaqus自带Python。
+本包把一套经实践检验的 Abaqus 调用方式、常见陷阱与证据规则封装为可移植入口。三个入口使用同一套后端，避免一个agent报RUNNING、另一个agent按旧缓存计算结果。无需第三方Python包；编写/调度使用Python≥3.9，ODB读取通过本机Abaqus自带Python。
 
-完整调用手册：[ABAQUS_CALLING_HANDBOOK.md](references/ABAQUS_CALLING_HANDBOOK.md)。子程序和故障专题见`references/`。本项目历史全面复盘不随包复制整个研究工作区，可在本机参考：
-
-`<PROJECT_ROOT>/<PRIVATE_PROJECT>/08_PROJECT_RETROSPECTIVE_20261004/PROJECT_ROUTES_PROBLEMS_LESSONS_AND_ABAQUS_CALLS.md`
+完整调用手册：[ABAQUS_CALLING_HANDBOOK.md](references/ABAQUS_CALLING_HANDBOOK.md)。子程序与故障诊断专题见 `references/`。
 
 ## 1. 包含哪些实际能力
 
@@ -39,9 +39,9 @@
 
 ## 2. 当前机器与迁移
 
-已核验本机：Windows，Abaqus2023，`<ABAQUS_LAUNCHER>`；Python3为`<PYTHON_EXE>`；按当前机器实测。ifx/MSVC候选路径存在，不等于本轮重新编译验证了所有UMAT/UINTER。
+已在 Windows + Abaqus 2023 上核验；launcher 与 Python 路径随机器而异，请用 `init-config` 自动探测。编译器候选是否存在，不等于已验证所有 UMAT/UINTER 都能编译。
 
-本机Skill安装位置：`<SKILL_DIR>`。
+Skill 安装位置因机器而异；下文路径仅为示意，请替换为你的实际位置。
 
 迁移：解压整个skill目录到目标agent可访问位置；在新机器先用 `init-config --output <新配置路径>` 生成建议配置（自动探测 launcher/编译器/硬件并按 `auto` 给出容量），再核对 `doctor.compat`、`doctor --query-release` 与 `solve_readiness`，用 `validate-config --query-release` 做提交前体检（BLOCKED 时先修配置/宿主，不要改模型），最后按授权修改launcher、项目根、registry、scratch及容量。配置中的工作区范围必须显式授权；路径比较已支持Windows大小写/斜杠差异。Abaqus和合法许可证须在目标机器独立安装；包不附带求解器、许可证、专有模型/ODB或私有编译器。详见 `references/HOST_COMPATIBILITY.md`。
 
@@ -50,7 +50,7 @@
 - `registry_dir`：本包自己的任务和审计记录，不指向历史queue文件。
 - `allowed_roots`：所有INP/include/user/ODB/work/scratch需要处于其内部。
 - `scratch_roots`：每job只能使用其下独立、为空的子目录；**必须在非系统盘的物理固定盘**，不要用C盘或网络/映射盘。`init-config` 会自动选空闲最大的数据盘，体检与plan都会拦截系统盘路径。
-- `preferred_scratch_drives`：可选的本机盘符偏好，如 `["D:"]`。由 `init-config --prefer-drive D:` 写入；体检会审计 scratch 是否落在该盘。作者本机 D 盘偏好不是通用默认，其他机器按实际情况指定。
+- `preferred_scratch_drives`：可选的本机盘符偏好，如 `["D:"]`。由 `init-config --prefer-drive D:` 写入；体检会审计 scratch 是否落在该盘。盘符偏好因机器而异，请按实际情况指定，不要照抄示例。
 - `allow_scratch_on_system_drive`：默认false。仅当用户明确书面批准接受系统盘填满风险时才设true，不用于真实生产算例。
 - `max_total_cpus`：物理核预算；`max_concurrent`和总内存预算同时限制。
 - 有未登记/无法识别的现有solver会阻止新提交，不偷偷占用旧队列资源。
@@ -58,7 +58,7 @@
 
 ## 3. CLI使用
 
-下面路径是本机实例；在其他机器替换为解压位置。示例INP/region名称只是合同模板，不代表存在可立即提交的模型。
+下面路径仅为示例；在其他机器请替换为你的解压位置。示例INP/region名称只是合同模板，不代表存在可立即提交的模型。
 
 ```powershell
 $abaqusPython = '<PYTHON_EXE>'
@@ -93,7 +93,7 @@ token不是许可证/密码；它绑定计划内容。输入、include、用户�
 
 选择支持**本地stdio MCP**的客户端，添加一个服务器。不同产品的导入UI和配置文件位置不同；本包不擅自修改WorkBuddy设置，也不假定它支持某个专有skill格式。
 
-可导入的本机JSON：`assets/mcp_client.local.example.json`。其常见`mcpServers`形式为：
+可导入的示例 JSON：`assets/mcp_client.local.example.json`。其常见`mcpServers`形式为：
 
 ```json
 {
@@ -123,10 +123,10 @@ token不是许可证/密码；它绑定计划内容。输入、include、用户�
 
 ## 5. 验收范围
 
-见`VALIDATION_REPORT.md`及`validation/`实际记录。测试包括命令规划/保护、峰值算法、MCP stdio握手与错误路径，以及本机Abaqus版本查询和既有ODB只读实测。打包本身不会提交新的有限元分析。新提交/编译/restart路径若仅被模拟测试覆盖，报告会明确写出，不能冒充新job的端到端验证。
+见`VALIDATION_REPORT.md`及`validation/`实际记录。测试包括命令规划/保护、峰值算法、MCP stdio握手与错误路径，以及 Abaqus 版本只读查询和既有 ODB 只读实测。打包本身不会提交新的有限元分析。新提交/编译/restart路径若仅被模拟测试覆盖，报告会明确写出，不能冒充新job的端到端验证。
 
 许可证、真正求解、用户子程序版本兼容、WorkBuddy产品UI导入仍需在使用时验证。异常脚本非零返回码与JSON error不能写成物理模型失败。
 
 ## 6. 授权与来源
 
-作者新编的桥接代码按根目录LICENSE使用；Abaqus/SIMULIA、官方文档及原研究项目不受该许可替代。包不包含第三方软件或文档全文。MCP实现参照[官方stdio规范](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)、[工具规范](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)和[生命周期](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle)。
+新编写的桥接代码按根目录 LICENSE 使用；Abaqus/SIMULIA 与官方文档不受该许可替代。包不包含第三方软件或文档全文。MCP实现参照[官方stdio规范](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)、[工具规范](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)和[生命周期](https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle)。
