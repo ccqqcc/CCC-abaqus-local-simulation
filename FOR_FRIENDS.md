@@ -1,11 +1,13 @@
-# CJC-abaqus-local-simulation 朋友上手指南
+> 中文版。[English](FOR_FRIENDS_EN.md)
+
+# abaqus-local-simulation 朋友上手指南
 
 这是把本机 Abaqus 调用封装成「Skill + 命令行 + 本地 MCP」的桥接包。
 它**不含** Abaqus 求解器、许可证、模型或 ODB；这些必须在你自己机器上独立安装。
 
 ## 0. 先搞清楚能不能用
 
-- 需要 **Windows + 已安装 Abaqus**（作者环境为 Abaqus 2023；其他版本需自行核对关键字/ABI）。
+- 需要 **Windows + 已安装 Abaqus**（示例环境为 Abaqus 2023；其他版本需自行核对关键字/ABI）。
 - 需要 **Python 3.9+**（任意 CPython；只读 ODB 走 Abaqus 自带 Python，编排走普通 Python）。
 - 只需要「能跑命令行」；想接 AI 客户端再配 MCP。
 - 检查自己是不是在**带注入/沙箱的 agent** 里：跑 `doctor`，若 `solve_readiness.verdict = BLOCKED_BY_AGENT_INJECTION`，这个宿主只能做审计/后处理，真实求解要换本机普通终端。
@@ -13,15 +15,15 @@
 ## 1. 拿到代码
 
 ```powershell
-git clone https://github.com/ccqqcc/CJC-abaqus-local-simulation.git
-cd CJC-abaqus-local-simulation
+git clone https://github.com/<OWNER>/abaqus-local-simulation.git
+cd abaqus-local-simulation
 ```
 
 不会 git 就直接点 GitHub 页面绿色 **Code → Download ZIP** 解压。
 
 ## 2. 三步完成本机配置（不要直接用仓库里的 local_config.json）
 
-那个文件是作者本机的路径示例，必须换成你自己的：
+那个文件是路径示例，必须换成你自己的：
 
 ```powershell
 $py = '<PYTHON_EXE>'          # 换成你的 Python
