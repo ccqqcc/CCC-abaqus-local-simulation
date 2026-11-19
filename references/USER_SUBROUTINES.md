@@ -1,3 +1,5 @@
+> 中文版。[English](references/USER_SUBROUTINES_EN.md)
+
 # 用户子程序：调用、编译、接口与验收
 
 ## 1. 先区分procedure和入口
@@ -22,7 +24,7 @@ Abaqus启动时调用编译器/链接器生成user库，再在solver中调用接
 
 包request加`user_subroutine`绝对路径，并把其Fortran INCLUDE文件/头文件/依赖库列入`additional_files`。相关文件和job-local env列入hash。安装级/site级环境还有继承影响，需要现场核验并记录，不是只审计一个env就闭合。
 
-## 3. 本机验证过的环境事实
+## 3. 示例环境中验证过的 Compiler/ABI 事实
 
 - Abaqus2023安装根：`<ABAQUS_INSTALL>`。
 - Intel ifx：`<PYTHON_HOME>/pkgs/ifx_impl_win-64-2025.3.1-intel_761/Library/bin/ifx.exe`。
