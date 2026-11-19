@@ -1,6 +1,6 @@
 > 中文版。[English](FOR_AI_AGENT_EN.md)
 
-# abaqus-local-simulation — 给 AI 代理的完整接入与执行指令
+# CCC-abaqus-local-simulation — 给 AI 代理的完整接入与执行指令
 
 > 这份文档是写给 **AI 代理**读的，不是给人看的简介。
 > 你的使用者会把它连同仓库地址一起发给你。你要按本文，在**你自己的 Windows 机器**上，
@@ -69,8 +69,8 @@ py -3 --version
 ### 1.2 获取代码
 
 ```powershell
-$ROOT = '<PROJECT_ROOT>\abaqus-local-simulation'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
-git clone https://github.com/<OWNER>/abaqus-local-simulation.git $ROOT
+$ROOT = '<PROJECT_ROOT>\CCC-abaqus-local-simulation'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
+git clone https://github.com/<OWNER>/CCC-abaqus-local-simulation.git $ROOT
 ```
 
 不会用 git 就从 GitHub 页面 **Code → Download ZIP** 下载并解压，效果一样。
@@ -129,7 +129,7 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 
 ```powershell
 $PY     = '<PYTHON_EXE>'                        # §1.1 得到的绝对路径
-$ROOT   = '<PROJECT_ROOT>\abaqus-local-simulation'       # §1.2 的目录
+$ROOT   = '<PROJECT_ROOT>\CCC-abaqus-local-simulation'       # §1.2 的目录
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
 $CFG    = '<PROJECT_ROOT>\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
 $SCRATCH = '<PROJECT_ROOT>\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘；若本机有固定偏好可在 init-config 加 --prefer-drive D:
@@ -257,10 +257,10 @@ New-Item -ItemType Directory -Force -Path $SCRATCH | Out-Null
 ```json
 {
   "mcpServers": {
-    "abaqus-local-simulation": {
+    "CCC-abaqus-local-simulation": {
       "command": "<PYTHON_EXE>",
       "args": [
-        "D:\\AI_ABAQUS\\abaqus-local-simulation\\scripts\\mcp_server.py",
+        "D:\\AI_ABAQUS\\CCC-abaqus-local-simulation\\scripts\\mcp_server.py",
         "--config",
         "D:\\AI_ABAQUS\\agent_config.json"
       ]
@@ -295,7 +295,7 @@ initialize → notifications/initialized → tools/list → abaqus_doctor
 
 ### 5.3 方式 C：作为 Skill 安装
 
-如果你的 AI 客户端支持 Skill，把整个 `abaqus-local-simulation` 目录放到它的 skills 目录，然后指示它读 `SKILL.md`。三种入口共用同一后端，不会出现"一个 agent 报 RUNNING、另一个按旧缓存算"的问题。
+如果你的 AI 客户端支持 Skill，把整个 `CCC-abaqus-local-simulation` 目录放到它的 skills 目录，然后指示它读 `SKILL.md`。三种入口共用同一后端，不会出现"一个 agent 报 RUNNING、另一个按旧缓存算"的问题。
 
 ---
 
