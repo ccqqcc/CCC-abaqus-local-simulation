@@ -2,7 +2,7 @@
 
 
 
-# abaqus-local-simulation: Abaqus Cross-Agent Invocation Package (Skill + CLI + MCP)
+# CCC-abaqus-local-simulation: Abaqus Cross-Agent Invocation Package (Skill + CLI + MCP)
 
 > **First time getting this repository?**
 > - You plan to send the instructions to an AI agent and have it install and run everything itself → use [`FOR_AI_AGENT.md`](FOR_AI_AGENT_EN.md) (complete executable instructions, recommended)
@@ -100,7 +100,7 @@ An importable example JSON: `assets/mcp_client.local.example.json`. Its common `
 ```json
 {
   "mcpServers": {
-    "abaqus-local-simulation": {
+    "CCC-abaqus-local-simulation": {
       "command": "<PYTHON_EXE>",
       "args": [
         "<SKILL_DIR>/scripts/mcp_server.py",
