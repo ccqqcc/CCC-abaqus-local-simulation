@@ -219,7 +219,7 @@ def normalize_drive(token):
     return os.path.normcase(drive + os.sep)
 
 
-def suggest_scratch_root(base_dir, folder='CJC_ABAQUS_SCRATCH', preferred=()):
+def suggest_scratch_root(base_dir, folder='ABAQUS_SCRATCH', preferred=()):
     """Recommend a scratch root on a fixed non-system drive.
 
     If `preferred` gives drive letters (e.g. ['D:']), the first matching fixed
