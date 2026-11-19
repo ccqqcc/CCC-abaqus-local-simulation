@@ -1,4 +1,6 @@
-# CJC-abaqus-local-simulation — 给 AI 代理的完整接入与执行指令
+> 中文版。[English](FOR_AI_AGENT_EN.md)
+
+# abaqus-local-simulation — 给 AI 代理的完整接入与执行指令
 
 > 这份文档是写给 **AI 代理**读的，不是给人看的简介。
 > 你的使用者会把它连同仓库地址一起发给你。你要按本文，在**你自己的 Windows 机器**上，
@@ -30,7 +32,7 @@
 - **不得**声称许可证已验证——`doctor` 明确写 `license_availability=UNVERIFIED`，只有一次真实授权作业才能验证。
 - **不得**把原始 field 均值或单点比例当成面积/体积加权结论。
 - **不得**混用 Standard 与 Explicit 的结果；同一张 INP 在两种求解器里算法不同。
-- **不得**修改 `assets/local_config.json` 当成"配置好了"——那是作者本机路径示例，必须生成你自己的配置。
+- **不得**修改 `assets/local_config.json` 当成"配置好了"——那是路径示例，必须生成你自己的配置。
 - **不得**把作业工作目录或 scratch 放到**系统盘**（Windows 的 C 盘）：几十 GB 临时文件会撑爆系统分区，系统盘 IO 争抢会拖慢求解甚至触发 MPI 超时。本包会在 `validate-config` 和 `plan` 两处拦截；不要为了绕过它去打开 `allow_scratch_on_system_drive=true`，除非人类明确书面批准并接受风险。scratch 必须是非系统物理盘上的绝对路径，每个 job 一个独立空子目录，不用网络盘/映射盘。
 
 ### 0.3 必须停下来等人类点头的三个节点
@@ -67,8 +69,8 @@ py -3 --version
 ### 1.2 获取代码
 
 ```powershell
-$ROOT = '<SKILL_DIR>'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
-git clone https://github.com/ccqqcc/CJC-abaqus-local-simulation.git $ROOT
+$ROOT = '<PROJECT_ROOT>\abaqus-local-simulation'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
+git clone https://github.com/<OWNER>/abaqus-local-simulation.git $ROOT
 ```
 
 不会用 git 就从 GitHub 页面 **Code → Download ZIP** 下载并解压，效果一样。
@@ -109,7 +111,7 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 | 顺序 | 文件 | 你要从中得到什么 |
 |---|---|---|
 | 1 | `SKILL.md` | 总入口、9 条不变量、最小操作闭环、接口说明 |
-| 2 | `README.md` | 能力表、本机实例说明、迁移要点、验收范围 |
+| 2 | `README.md` | 能力表、路径示例、迁移要点、验收范围 |
 | 3 | `references/HOST_COMPATIBILITY.md` | 换机器怎么配、`auto` 容量规则、降级行为、**`validate-config` 十项判定表** |
 | 4 | `references/ABAQUS_CALLING_HANDBOOK.md` §1–8 | 完整本地调用工作流、精确命令形式、材料/接触/输出卡注意事项 |
 | 5 | 同上 §9–11 | 峰值、能量、损伤证据规则——任何强度/损伤结论前必读 |
@@ -127,7 +129,7 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 
 ```powershell
 $PY     = '<PYTHON_EXE>'                        # §1.1 得到的绝对路径
-$ROOT   = '<SKILL_DIR>'       # §1.2 的目录
+$ROOT   = '<PROJECT_ROOT>\abaqus-local-simulation'       # §1.2 的目录
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
 $CFG    = '<PROJECT_ROOT>\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
 $SCRATCH = '<PROJECT_ROOT>\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘；若本机有固定偏好可在 init-config 加 --prefer-drive D:
@@ -139,7 +141,7 @@ $SCRATCH = '<PROJECT_ROOT>\scratch'                          # 必须选非系�
 
 ```powershell
 & $PY $BRIDGE init-config --output $CFG
-# 若本机对盘符有明确偏好（例如工作固定放 D 盘），显式指定，不要把作者本机的偏好当成通用默认：
+# 若本机对盘符有明确偏好（例如工作固定放 D 盘），显式指定，不要把某个特定盘符当成通用默认：
 # & $PY $BRIDGE init-config --output $CFG --prefer-drive 'D:'
 ```
 
@@ -165,7 +167,7 @@ Get-Content $CFG
 | `allowed_roots` | 改成你**确实被授权读写**的项目根目录。所有 INP/include/ODB/work/scratch 都必须落在这些根之内。 |
 | `registry_dir` | 本包自己的作业记录目录，不要指向历史 queue 文件。 |
 | `scratch_roots` | 改成你打算用的 scratch 根（如 `$SCRATCH`）。该目录**必须预先存在**，否则 launcher 直接拒绝作业。**必须位于非系统盘的物理固定盘**；写成系统盘会被体检和 plan 双重拒绝。 |
-| `preferred_scratch_drives` | 可选，如 `["D:"]`，表达**本机**的 scratch 盘符偏好；`init-config --prefer-drive` 会自动写入。体检会审计 scratch 是否真的落在该盘。作者本机用 D 盘是因为 C 盘只剩约 32 GB，这不是通用默认值。 |
+| `preferred_scratch_drives` | 可选，如 `["D:"]`，表达**本机**的 scratch 盘符偏好；`init-config --prefer-drive` 会自动写入。体检会审计 scratch 是否真的落在该盘。盘符偏好按你的机器实际情况决定，不是通用默认值。 |
 | `allow_scratch_on_system_drive` | 默认 `false`，保持不动。只有人类明确书面批准接受系统盘填满风险时才改 `true`，且不要用于真实算例。 |
 | `max_total_cpus` / `max_total_memory_mb` / `max_concurrent` | 整数或 `"auto"`。`plan` 返回的 `capacity.limits` 会显示实际生效值。 |
 | `min_free_disk_bytes` | 保护下限，默认 8 GiB。 |
@@ -221,7 +223,7 @@ New-Item -ItemType Directory -Force -Path $SCRATCH | Out-Null
 重点看三个字段：
 - `solve_readiness.verdict`：若为 `BLOCKED_BY_AGENT_INJECTION`，当前宿主不能真跑求解；
 - `compat.launcher_candidates` / `compat.compilers`：确认自动发现结果；
-- `release_query.parsed.version`（加 `--query-release` 时）：作者验证环境是 `2023`，其他版本需自行核对关键字和 ABI。
+- `release_query.parsed.version`（加 `--query-release` 时）：示例验证环境是 `2023`，其他版本需自行核对关键字和 ABI。
 
 ---
 
@@ -255,10 +257,10 @@ New-Item -ItemType Directory -Force -Path $SCRATCH | Out-Null
 ```json
 {
   "mcpServers": {
-    "CJC-abaqus-local-simulation": {
+    "abaqus-local-simulation": {
       "command": "<PYTHON_EXE>",
       "args": [
-        "D:\\AI_ABAQUS\\CJC-abaqus-local-simulation\\scripts\\mcp_server.py",
+        "D:\\AI_ABAQUS\\abaqus-local-simulation\\scripts\\mcp_server.py",
         "--config",
         "D:\\AI_ABAQUS\\agent_config.json"
       ]
@@ -293,7 +295,7 @@ initialize → notifications/initialized → tools/list → abaqus_doctor
 
 ### 5.3 方式 C：作为 Skill 安装
 
-如果你的 AI 客户端支持 Skill，把整个 `CJC-abaqus-local-simulation` 目录放到它的 skills 目录，然后指示它读 `SKILL.md`。三种入口共用同一后端，不会出现"一个 agent 报 RUNNING、另一个按旧缓存算"的问题。
+如果你的 AI 客户端支持 Skill，把整个 `abaqus-local-simulation` 目录放到它的 skills 目录，然后指示它读 `SKILL.md`。三种入口共用同一后端，不会出现"一个 agent 报 RUNNING、另一个按旧缓存算"的问题。
 
 ---
 
