@@ -41,10 +41,10 @@ abaqus.bat python odb_probe.py → odbAccess(readOnly=True)
 本机已存在：
 
 ```text
-D:\SIMULIA\Commands\abaqus.bat
-D:\SIMULIA\Commands\abq2023.bat
-D:\SIMULIA\EstProducts\2023\win_b64
-D:\anaconda3\python.exe
+<ABAQUS_LAUNCHER>
+<ABAQUS_LAUNCHER>
+<ABAQUS_INSTALL>\win_b64
+<PYTHON_EXE>
 ```
 
 `abaqus.bat`转发`abq2023.bat`。调用时使用绝对路径；不要把PATH里另一个版本当成本项目运行版本。
@@ -52,14 +52,14 @@ D:\anaconda3\python.exe
 读取版本示例（在新的审计目录执行）：
 
 ```powershell
-& 'D:\SIMULIA\Commands\abaqus.bat' information=release
+& '<ABAQUS_LAUNCHER>' information=release
 ```
 
 这可能生成信息/日志文件，所以不要把工作目录设为冻结的历史job。它不会运行一个FE分析，也不证明当前有可签出的solver license。
 
 许可证：先确定站点使用FLEXnet还是DSLS，依其管理员/安装手册的合法状态查询命令检查。FLEXnet常见入口是`abaqus licensing lmstat -a`；并不适用于所有DSLS站点。不绕过许可、不自动修改许可证服务器地址、不把license等待当成材料收敛失败。输出中的服务器/用户信息不应随对外包泄露。本包doctor明确保留`license_availability=UNVERIFIED`。
 
-本机2990WX为32物理核/64逻辑线程。4×8和16×2均按32物理核预算，不按64逻辑线程翻倍。总内存约63.89GiB；包配置预留49152MiB给已登记job，仍不代表操作系统实际可用内存恒定。并发还受license、NVMe空间、NUMA和日志/ODB I/O制约。现场先查看已有solver，不能把旧队列当不存在。
+CPU/RAM 容量一律按当前机器实测的物理核与可用内存给出预算，不按逻辑线程翻倍；包配置预留容量给已登记 job，不代表操作系统实际可用内存恒定。并发还受 license、磁盘空间、NUMA 和日志/ODB I/O 制约。现场先查看已有 solver，不能把旧队列当不存在。现场先查看已有solver，不能把旧队列当不存在。
 
 ## 4. 模型构建与依赖审计
 
@@ -101,7 +101,7 @@ abaqus.bat job=CHECK_MODEL_X input=MODEL_X.inp cpus=2 memory=2048mb scratch=<独
 普通Standard：
 
 ```powershell
-& 'D:\SIMULIA\Commands\abaqus.bat' job=MY_X input=MY_X.inp cpus=2 memory=2048mb scratch=H:\ABAQUS_AGENT_SCRATCH\MY_X interactive ask_delete=OFF
+& '<ABAQUS_LAUNCHER>' job=MY_X input=MY_X.inp cpus=2 memory=2048mb scratch=<SCRATCH_ROOT>\MY_X interactive ask_delete=OFF
 ```
 
 Standard/Explicit由INP的procedure确定，不是job名字决定。`input=`可不写时一般默认为同名INP，本包仍显式传入已审计绝对路径。
@@ -130,7 +130,7 @@ AUTHORIZED_PROJECT/jobs/MY_X/
   user.f90                 如需
   abaqus_v6.env            经审计的局部配置，如需
   MY_X.log/.dat/.msg/.sta/.odb/...
-H:/ABAQUS_AGENT_SCRATCH/MY_X/
+<SCRATCH_ROOT>/MY_X/
 registry/job-<managed-id>.json
 registry/worker-<managed-id>.log
 registry/probe-<unique-id>-result.json
