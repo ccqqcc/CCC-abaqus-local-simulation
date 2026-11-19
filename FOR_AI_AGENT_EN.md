@@ -2,7 +2,7 @@
 
 
 
-# abaqus-local-simulation — Complete Integration and Execution Instructions for AI Agents
+# CCC-abaqus-local-simulation — Complete Integration and Execution Instructions for AI Agents
 
 > This document is written for **AI agents** to read, not a human-facing introduction.
 > Your user will send it to you along with the repository URL. Following this document, you must
@@ -72,8 +72,8 @@ Note the usable absolute path; below it is referred to as `$PY`. **Use this abso
 ### 1.2 Obtain the code
 
 ```powershell
-$ROOT = '<PROJECT_ROOT>\abaqus-local-simulation'   # Replace with where you intend to put it; the path must not contain & | < > ^ % ! or quotes
-git clone https://github.com/<OWNER>/abaqus-local-simulation.git $ROOT
+$ROOT = '<PROJECT_ROOT>\CCC-abaqus-local-simulation'   # Replace with where you intend to put it; the path must not contain & | < > ^ % ! or quotes
+git clone https://github.com/<OWNER>/CCC-abaqus-local-simulation.git $ROOT
 ```
 
 If you do not know how to use git, download from the GitHub page via **Code → Download ZIP** and extract it; the result is the same.
@@ -132,7 +132,7 @@ Read everything before taking action. In particular, the peak rules in §5 deter
 
 ```powershell
 $PY     = '<PYTHON_EXE>'                        # Absolute path obtained in §1.1
-$ROOT   = '<PROJECT_ROOT>\abaqus-local-simulation'       # The directory from §1.2
+$ROOT   = '<PROJECT_ROOT>\CCC-abaqus-local-simulation'       # The directory from §1.2
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
 $CFG    = '<PROJECT_ROOT>\agent_config.json'                 # An absolute path of your choosing; do not place it in the repository
 $SCRATCH = '<PROJECT_ROOT>\scratch'                          # Must be on a physical non-system drive (not C:); if this machine has a fixed preference, you can add --prefer-drive D: in init-config
@@ -262,10 +262,10 @@ Use the contents of `assets/mcp_client.local.example.json` as a template, replac
 ```json
 {
   "mcpServers": {
-    "abaqus-local-simulation": {
+    "CCC-abaqus-local-simulation": {
       "command": "<PYTHON_EXE>",
       "args": [
-        "D:\\AI_ABAQUS\\abaqus-local-simulation\\scripts\\mcp_server.py",
+        "D:\\AI_ABAQUS\\CCC-abaqus-local-simulation\\scripts\\mcp_server.py",
         "D:\\AI_ABAQUS\\agent_config.json"
       ]
     }
@@ -299,7 +299,7 @@ There is **no** arbitrary shell tool and no network listener. This means: even i
 
 ### 5.3 Method C: install as a Skill
 
-If your AI client supports Skills, place the entire `abaqus-local-simulation` directory into its skills directory, then instruct it to read `SKILL.md`. All three entry points share the same backend, so there is no issue of "one agent reports RUNNING while another computes from a stale cache".
+If your AI client supports Skills, place the entire `CCC-abaqus-local-simulation` directory into its skills directory, then instruct it to read `SKILL.md`. All three entry points share the same backend, so there is no issue of "one agent reports RUNNING while another computes from a stale cache".
 
 ---
 
