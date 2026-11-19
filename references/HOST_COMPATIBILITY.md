@@ -1,3 +1,5 @@
+> 中文版。[English](references/HOST_COMPATIBILITY_EN.md)
+
 # 跨设备兼容与迁移（探测、降级、配置生成）
 
 本文件说明本包如何适应**不同 Windows 机器**：不同 Abaqus 安装路径/版本、不同 PowerShell 版本、不同 CPU/内存/磁盘布局、不同路径大小写习惯。所有探测只读，不启动求解器、不改动已有配置、不证明许可证签出。
@@ -47,15 +49,15 @@ $bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
 
 | 位置 | 行为 |
 |---|---|
-| `init-config` | 自动探测系统盘（`system_drive()`），列出固定数据盘（`data_drives()`），把 `scratch_roots` 选到**空闲最大的非系统盘** `CJC_ABAQUS_SCRATCH`；可用 `--prefer-drive D:`（可逗号分隔多个）指定**本机优先盘符**，此时按优先顺序而非空闲大小选择，并把 `preferred_scratch_drives` 写进配置以便审计。无可用数据盘时在 `note` 里给出明确警告 |
+| `init-config` | 自动探测系统盘（`system_drive()`），列出固定数据盘（`data_drives()`），把 `scratch_roots` 选到**空闲最大的非系统盘** `ABAQUS_SCRATCH`；可用 `--prefer-drive D:`（可逗号分隔多个）指定**本机优先盘符**，此时按优先顺序而非空闲大小选择，并把 `preferred_scratch_drives` 写进配置以便审计。无可用数据盘时在 `note` 里给出明确警告 |
 | `validate-config` | 新增 `scratch_disk_policy` 检查；scratch 落在系统盘时 `scratch_roots` 判 **FAIL**（除非显式覆盖），并列出系统盘与候选数据盘 |
 | `plan` | 提交前硬拦截：work 或 scratch 在系统盘直接拒绝，附修复指引 |
 | 首选盘审计 | `scratch_disk_policy` 会记录 `preferred_scratch_drives` 与实际 scratch 是否落在该盘；配了首选盘却没用上会标 **WARN**，提醒修正而不是静默忽略 |
 | 显式覆盖 | 只有配置里 `allow_scratch_on_system_drive=true`（需用户明确批准）才放行，此时体检标 WARN/INFO 留痕 |
 
-### 本机偏好示例（作者机器）
+### 盘符偏好示例（仅示意）
 
-作者本机把 **D 盘**定为工作任务首选盘，配置里显式写 `preferred_scratch_drives: ["D:"]`，scratch 落在 `<SCRATCH_ROOT>`。原因是本机 C 盘仅剩约 32 GB，而 D 盘有 1.3 TB 以上空闲；旧的 H 盘 scratch 只有 80 GB。这个偏好**只写在本机配置里**，不会作为通用默认值强加给其他机器——别人的机器按 `init-config --prefer-drive` 显式指定，或默认按空闲最大的物理盘自动选。给朋友的配置示例不含这条本机偏好。
+有些用户会把 **D 盘**设为工作任务首选盘，此时在配置里显式写 `preferred_scratch_drives: ["D:"]`，scratch 落在该盘。盘符偏好**只写在个人配置里**，不会作为通用默认值——其他机器可用 `init-config --prefer-drive` 显式指定，或默认按空闲最大的物理盘自动选。本包自带的配置示例不含任何盘符偏好。
 
 注意：`allow_scratch_on_system_drive` 是为测试夹具和特殊环境留的**逃生口**，不是常规选项。开启等于接受系统盘被填满和 IO 争抢的风险，不要用于真实生产算例。
 
