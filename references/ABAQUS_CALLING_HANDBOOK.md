@@ -1,6 +1,8 @@
+> 中文版。[English](references/ABAQUS_CALLING_HANDBOOK_EN.md)
+
 # Abaqus调用全手册：从任务合同到可接受的ODB证据
 
-本手册依据本机真实runner、Fortran环境、Stage6/7日志及此前的输入/后处理错误编写。它总结“如何调用”，不把历史失败模型当成可随便复用的标定模板。公开官方文档链接采用目前可访问的2025版本；本机实际版本2023的支持情况仍须以该版本文档、datacheck和运行日志核验。
+本手册依据实际 runner、Fortran 环境和常见的输入/后处理错误编写。它总结“如何调用”，不把历史失败模型当成可随便复用的标定模板。公开官方文档链接采用目前可访问的 2025 版本；你所用版本的支持情况仍须以该版本文档、datacheck 和运行日志核验。
 
 ## 1. 调用架构与两套Python
 
@@ -38,7 +40,7 @@ abaqus.bat python odb_probe.py → odbAccess(readOnly=True)
 
 ## 3. 环境、版本、许可证和资源
 
-本机已存在：
+典型安装会包含：
 
 ```text
 <ABAQUS_LAUNCHER>
@@ -65,7 +67,7 @@ CPU/RAM 容量一律按当前机器实测的物理核与可用内存给出预算
 
 ### 4.1 两种实际方式
 
-1. 从已审计的INP/真实facet构建新的输入文本。Stage6/7主要如此，便于保留材料include和精确节点/facet。
+1. 从已审计的 INP / 真实 facet 构建新的输入文本，便于保留材料 include 和精确节点/facet。
 2. CAE Python脚本创建mdb/model/job并writeInput，必要时run；历史V11使用：
 
 ```text
@@ -154,7 +156,7 @@ worker超时只有`terminate_at_walltime=true`时才请求Abaqus终止；否则�
 
 ## 7. 吞吐、queue和输出
 
-先做与实际规模接近的短benchmark，比较jobs/hour而非只比较单job时间；一个8核job更快，不代表8×4更高吞吐。本机曾短测2×16优于4×8/8×4，宏观损伤模型仍需重测。
+先做与实际规模接近的短benchmark，比较jobs/hour而非只比较单job时间；一个8核job更快，不代表8×4更高吞吐。不同机器的最优布局不同，宏观损伤模型需用接近真实规模的短算例重新比较。
 
 队列只允许预先授权的清单，不由结果自动扩展新参数。可通过MCP逐job submit，或外部queue按status/capacity补槽。所有存活race/job均计入总CPU和内存；不要race4×8未结束又立刻开16×2。每job完成立即probe/update，不等全批。
 
@@ -194,7 +196,7 @@ abaqus.bat job=MY_X_RESTART input=MY_X_RESTART.inp oldjob=<原job绝对路径ste
 abaqus.bat python scripts/odb_probe.py request.json result.json
 ```
 
-在Abaqus Python内部`openOdb(path=...,readOnly=True)`，finally关闭。2023本机Python2对unicode path曾抛TypeError，适配filesystem编码；中文路径仍需实际确认，推荐模型/脚本技术路径用ASCII、中文留在报告。
+在Abaqus Python内部`openOdb(path=...,readOnly=True)`，finally关闭。部分版本的 Abaqus Python 对 unicode path 可能抛 TypeError，必要时适配 filesystem 编码；中文路径仍需实际确认，推荐模型/脚本技术路径用ASCII、中文留在报告。
 
 先inventory所有steps、historyRegions和field keys；显式指定加载RP。如果用top节点集合：各节点RF需同一时间、相同位移定义，先求有符号总和再取幅值；位移不一致时不能盲目平均。底部定位RP不是加载RP。Material3旧例单节点5727N与top total215726N差巨大，说明自动选最大U或一个节点均不能替代loadpath审计。
 
@@ -241,4 +243,4 @@ ALLAE检查hourglass/artificial strain；ALLVD检查耗散但不替代ALLCD；st
 - 最终交付列清源hash、命令、控制/资源、job终态、峰资格、能量、field缺项、原始路径、禁止声称的结论。
 - implementation gate、numerical gate、method screen、experimental validation分开；缺真实材料/拓扑时保持数据边界。
 
-本机来源入口：Stage6C0 `run_stage6c0.py`，Stage7 `build_stage7.py/control_stage7.py/probe_stage7.py/watchdog_stage7.py`及各job的`abaqus_v6.env`。本包是提炼/加保护的新实现，不接管这些历史脚本。
+本包是独立实现，不接管任何历史项目的脚本或任务队列。
