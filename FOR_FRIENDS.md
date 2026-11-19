@@ -24,7 +24,7 @@ cd CJC-abaqus-local-simulation
 那个文件是作者本机的路径示例，必须换成你自己的：
 
 ```powershell
-$py = 'D:\anaconda3\python.exe'          # 换成你的 Python
+$py = '<PYTHON_EXE>'          # 换成你的 Python
 $bridge = '.\scripts\abaqus_agent.py'
 
 # 1) 按你的机器生成配置骨架（自动找 abaqus.bat / 编译器 / 算容量 / 自动选非系统盘做 scratch）
