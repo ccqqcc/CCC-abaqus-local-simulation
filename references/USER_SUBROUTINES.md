@@ -24,8 +24,8 @@ Abaqus启动时调用编译器/链接器生成user库，再在solver中调用接
 
 ## 3. 本机验证过的环境事实
 
-- Abaqus2023安装根：`D:/SIMULIA/EstProducts/2023`。
-- Intel ifx：`D:/anaconda3/pkgs/ifx_impl_win-64-2025.3.1-intel_761/Library/bin/ifx.exe`。
+- Abaqus2023安装根：`<ABAQUS_INSTALL>`。
+- Intel ifx：`<PYTHON_HOME>/pkgs/ifx_impl_win-64-2025.3.1-intel_761/Library/bin/ifx.exe`。
 - MSVC x64 link：`C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.exe`。
 - job-local env先放正确Intel Fortran/compiler runtime，再放旧PATH，避免旧Abaqus runtime抢先。
 - 旧`ifort.bat`曾是转发ifx的适配器，不能据文件名宣称classic ifort已安装。
