@@ -1,6 +1,6 @@
 {
   "mode": "peak",
-  "odb": "D:/ai_abaqus/NEW_AUTHORIZED_PROJECT/MY_NEW_ANALYSIS_X/MY_NEW_ANALYSIS_X.odb",
+  "odb": "<PROJECT_ROOT>/MY_NEW_ANALYSIS_X/MY_NEW_ANALYSIS_X.odb",
   "step": "Compression",
   "history_regions": ["Node ASSEMBLY.100001"],
   "axis": "X",
