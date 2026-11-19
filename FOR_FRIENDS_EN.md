@@ -2,7 +2,7 @@
 
 
 
-# abaqus-local-simulation: A Friend's Quick-Start Guide
+# CCC-abaqus-local-simulation: A Friend's Quick-Start Guide
 
 This is a bridge package that wraps local Abaqus invocation into a "Skill + command line + local MCP". It does **not** include the Abaqus solver, license, models, or ODBs; these must be installed independently on your own machine.
 
@@ -16,8 +16,8 @@ This is a bridge package that wraps local Abaqus invocation into a "Skill + comm
 ## 1. Get the code
 
 ```powershell
-git clone https://github.com/<OWNER>/abaqus-local-simulation.git
-cd abaqus-local-simulation
+git clone https://github.com/<OWNER>/CCC-abaqus-local-simulation.git
+cd CCC-abaqus-local-simulation
 ```
 
 If you don't know git, just click the green **Code → Download ZIP** on the GitHub page and extract it.
