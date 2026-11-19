@@ -1,6 +1,6 @@
 > 中文版。[English](FOR_FRIENDS_EN.md)
 
-# abaqus-local-simulation 朋友上手指南
+# CCC-abaqus-local-simulation 朋友上手指南
 
 这是把本机 Abaqus 调用封装成「Skill + 命令行 + 本地 MCP」的桥接包。
 它**不含** Abaqus 求解器、许可证、模型或 ODB；这些必须在你自己机器上独立安装。
@@ -15,8 +15,8 @@
 ## 1. 拿到代码
 
 ```powershell
-git clone https://github.com/<OWNER>/abaqus-local-simulation.git
-cd abaqus-local-simulation
+git clone https://github.com/<OWNER>/CCC-abaqus-local-simulation.git
+cd CCC-abaqus-local-simulation
 ```
 
 不会 git 就直接点 GitHub 页面绿色 **Code → Download ZIP** 解压。
