@@ -18,7 +18,6 @@ This folder is both a portable skill and a stdlib-only CLI/MCP adapter. It does 
 - `doctor.solve_readiness` is the pre-submission verdict on whether THIS host can run a real solve. If its verdict is `BLOCKED_BY_AGENT_INJECTION`, do not submit; use the host for audit/post-processing only.
 - For a job that failed or left an empty ODB, run `triage --workdir <dir> --job <name>` (or the `abaqus_triage_job` MCP tool) to classify ONE root-cause class from raw logs before changing any model input.
 - On a new machine, a different Abaqus install/path/version, or a host without PowerShell, read [references/HOST_COMPATIBILITY.md](references/HOST_COMPATIBILITY.md). `init-config` generates a device-appropriate config skeleton; `validate-config` is the read-only pre-submission preflight (PASS/WARN/FAIL per check). Discovery never replaces an authorized launcher choice or a license check.
-- Only for this concrete project, read [references/PROJECT_CONTRACT.md](references/PROJECT_CONTRACT.md). Do not impose its geometry/material/targets on unrelated analyses.
 
 ## Non-obvious invariants
 
