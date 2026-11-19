@@ -669,7 +669,7 @@ class MCPProtocol(unittest.TestCase):
         self.assertEqual(output[3]['result'], {})
         self.assertTrue(output[4]['result']['isError'])
         resources = output[5]['result']['resources']
-        self.assertEqual(len(resources), 6)
+        self.assertEqual(len(resources), 5)
         self.assertIn('abaqus://agent-host', {r['uri'] for r in resources})
         self.assertIn('abaqus://host-compat', {r['uri'] for r in resources})
         self.assertEqual(output[6]['result']['contents'][0]['mimeType'], 'text/markdown')
