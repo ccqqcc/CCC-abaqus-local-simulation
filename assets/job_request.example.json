@@ -1,8 +1,8 @@
 {
   "job": "MY_NEW_ANALYSIS_X",
-  "input": "D:/ai_abaqus/NEW_AUTHORIZED_PROJECT/MY_NEW_ANALYSIS_X/MY_NEW_ANALYSIS_X.inp",
-  "workdir": "D:/ai_abaqus/NEW_AUTHORIZED_PROJECT/MY_NEW_ANALYSIS_X",
-  "scratch": "H:/ABAQUS_AGENT_SCRATCH/MY_NEW_ANALYSIS_X",
+  "input": "<PROJECT_ROOT>/MY_NEW_ANALYSIS_X/MY_NEW_ANALYSIS_X.inp",
+  "workdir": "<PROJECT_ROOT>/MY_NEW_ANALYSIS_X",
+  "scratch": "<SCRATCH_ROOT>/MY_NEW_ANALYSIS_X",
   "solver": "standard",
   "operation": "analysis",
   "cpus": 2,
