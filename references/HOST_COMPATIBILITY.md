@@ -22,7 +22,7 @@
 
 ```powershell
 $py = '<PYTHON_EXE>'
-$bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
+$bridge = 'C:\path\to\CCC-abaqus-local-simulation\scripts\abaqus_agent.py'
 & $py $bridge init-config --output 'D:\new_project\agent_config.json'
 ```
 
