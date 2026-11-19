@@ -1,6 +1,6 @@
 > 中文版。[English](README_EN.md)
 
-# abaqus-local-simulation：Abaqus跨Agent调用包（Skill + CLI + MCP）
+# CCC-abaqus-local-simulation：Abaqus跨Agent调用包（Skill + CLI + MCP）
 
 > **第一次拿到本仓库？**
 > - 你打算把说明发给 AI 代理，让 AI 自己装好并跑通 → 用 [`FOR_AI_AGENT.md`](FOR_AI_AGENT.md)（完整可执行指令，推荐）
@@ -98,7 +98,7 @@ token不是许可证/密码；它绑定计划内容。输入、include、用户�
 ```json
 {
   "mcpServers": {
-    "abaqus-local-simulation": {
+    "CCC-abaqus-local-simulation": {
       "command": "<PYTHON_EXE>",
       "args": [
         "<SKILL_DIR>/scripts/mcp_server.py",
