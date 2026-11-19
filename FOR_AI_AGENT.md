@@ -59,7 +59,7 @@ python --version
 ```powershell
 py -3 --version
 # 或直接用 Anaconda / 已安装 Python 的绝对路径，例如：
-D:\anaconda3\python.exe --version
+<PYTHON_EXE> --version
 ```
 
 记下可用的绝对路径，下文记作 `$PY`。**后面所有命令都用绝对路径调用它**，不要依赖 PATH。
@@ -67,7 +67,7 @@ D:\anaconda3\python.exe --version
 ### 1.2 获取代码
 
 ```powershell
-$ROOT = 'D:\AI_ABAQUS\CJC-abaqus-local-simulation'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
+$ROOT = '<SKILL_DIR>'   # 换成你打算放的位置，路径不要含 & | < > ^ % ! 引号
 git clone https://github.com/ccqqcc/CJC-abaqus-local-simulation.git $ROOT
 ```
 
@@ -100,7 +100,7 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 
 ### 1.4 确认 Abaqus 存在
 
-不需要手工找——skill 会自动探测。但先确认机器确实装了 Abaqus：常见 launcher 是 `C:\SIMULIA\Commands\abaqus.bat` 或 `D:\SIMULIA\Commands\abaqus.bat`。如果没有，本包无法工作，直接如实报告给人类。
+不需要手工找——skill 会自动探测。但先确认机器确实装了 Abaqus：常见 launcher 形如 `<ABAQUS_COMMANDS>\abaqus.bat`，实际位置随安装而变。如果没有，本包无法工作，直接如实报告给人类。
 
 ---
 
@@ -116,7 +116,6 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 | 6 | `references/AGENT_HOST_SANDBOX.md` | 如果你自己运行在注入/隔离沙箱里，先读这个 |
 | 7 | `references/TROUBLESHOOTING.md` | 出问题时按症状查，不必一开始就通读 |
 | 8 | `references/USER_SUBROUTINES.md` | 只有用 UMAT/UINTER/VUMAT/VUINTER 时才读，编译器 ABI 不能跨版本抄 |
-| 9 | `references/PROJECT_CONTRACT.md` | **只对作者那个具体 3DPC 项目有效**。不要把它里的几何、材料、目标强度套到你人类的项目上 |
 
 读完再动手。尤其是 §5 的峰值规则，它决定了你后面能不能说"有效峰"。
 
@@ -127,11 +126,11 @@ Write-Output "FILE_CHECK_OK count=$($need.Count)"
 ### 3.1 定义路径变量
 
 ```powershell
-$PY     = 'D:\anaconda3\python.exe'                        # §1.1 得到的绝对路径
-$ROOT   = 'D:\AI_ABAQUS\CJC-abaqus-local-simulation'       # §1.2 的目录
+$PY     = '<PYTHON_EXE>'                        # §1.1 得到的绝对路径
+$ROOT   = '<SKILL_DIR>'       # §1.2 的目录
 $BRIDGE = Join-Path $ROOT 'scripts\abaqus_agent.py'
-$CFG    = 'D:\AI_ABAQUS\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
-$SCRATCH = 'D:\AI_ABAQUS\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘；若本机有固定偏好可在 init-config 加 --prefer-drive D:
+$CFG    = '<PROJECT_ROOT>\agent_config.json'                 # 你自己选的绝对路径，不要放在仓库里
+$SCRATCH = '<PROJECT_ROOT>\scratch'                          # 必须选非系统盘（不是 C 盘）的物理盘；若本机有固定偏好可在 init-config 加 --prefer-drive D:
 ```
 
 所有路径必须是**绝对路径**，且不含 `& | < > ^ % !`、引号或换行。含这些字符会被安全校验拒绝，换路径，不要关校验。
@@ -257,7 +256,7 @@ New-Item -ItemType Directory -Force -Path $SCRATCH | Out-Null
 {
   "mcpServers": {
     "CJC-abaqus-local-simulation": {
-      "command": "D:\\anaconda3\\python.exe",
+      "command": "<PYTHON_EXE>",
       "args": [
         "D:\\AI_ABAQUS\\CJC-abaqus-local-simulation\\scripts\\mcp_server.py",
         "--config",
@@ -289,7 +288,6 @@ initialize → notifications/initialized → tools/list → abaqus_doctor
 | `abaqus_host_compat` | 只读，换机器时先跑 |
 | `abaqus_validate_config` | 只读，提交前必跑 |
 
-另有 **6 个只读文档资源**：`abaqus://handbook`、`abaqus://user-subroutines`、`abaqus://troubleshooting`、`abaqus://agent-host`、`abaqus://host-compat`、`abaqus://project-contract`。
 
 **没有**任意 shell 工具、没有网络监听。这意味着：即使你的 AI 客户端没有命令行权限，也能靠这些工具完成配置体检和 ODB 分析；但真实求解仍需要本机授权。
 
