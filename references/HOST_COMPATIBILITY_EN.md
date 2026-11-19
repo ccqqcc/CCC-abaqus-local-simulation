@@ -24,7 +24,7 @@ The original verification environment is Windows + Abaqus 2023. Other versions/i
 
 ```powershell
 $py = '<PYTHON_EXE>'
-$bridge = 'C:\path\to\abaqus-local-simulation\scripts\abaqus_agent.py'
+$bridge = 'C:\path\to\CCC-abaqus-local-simulation\scripts\abaqus_agent.py'
 & $py $bridge init-config --output 'D:\new_project\agent_config.json'
 ```
 
